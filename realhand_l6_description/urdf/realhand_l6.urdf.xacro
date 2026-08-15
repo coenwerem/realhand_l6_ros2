@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+  Standalone RealHand L6, hand base fixed to a world link.
+
+  Args
+    prefix         link and joint name prefix, default empty
+    side           right or left
+    hardware       none, mock, or real. none emits no ros2_control block
+    can_interface  SocketCAN device for real hardware
+    can_id         explicit CAN id, empty selects the side default
+    enable_tactile request taxel matrices from the hand
+    taxel_topic    optional raw taxel JSON topic
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="realhand_l6">
+
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="side" default="right"/>
+  <xacro:arg name="hardware" default="none"/>
+  <xacro:arg name="can_interface" default="can0"/>
+  <xacro:arg name="can_id" default=""/>
+  <xacro:arg name="enable_tactile" default="true"/>
+  <xacro:arg name="taxel_topic" default=""/>
+
+  <xacro:include filename="$(find realhand_l6_description)/urdf/realhand_l6_macro.xacro"/>
+  <xacro:include filename="$(find realhand_l6_description)/urdf/realhand_l6.ros2_control.xacro"/>
+
+  <link name="world"/>
+
+  <xacro:realhand_l6 prefix="$(arg prefix)" side="$(arg side)" parent="world">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:realhand_l6>
+
+  <xacro:unless value="${'$(arg hardware)' == 'none'}">
+    <xacro:realhand_l6_ros2_control
+      name="$(arg prefix)realhand_l6_$(arg side)"
+      prefix="$(arg prefix)"
+      side="$(arg side)"
+      hardware="$(arg hardware)"
+      can_interface="$(arg can_interface)"
+      can_id="$(arg can_id)"
+      enable_tactile="$(arg enable_tactile)"
+      taxel_topic="$(arg taxel_topic)"/>
+  </xacro:unless>
+
+</robot>

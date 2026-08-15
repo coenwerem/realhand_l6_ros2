@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+  ros2_control block for one RealHand L6.
+
+  Params
+    name           name of the ros2_control system
+    prefix         same prefix as the realhand_l6 macro
+    side           right or left
+    hardware       mock or real. mock loads mock_components/GenericSystem
+                   with mock_sensor_commands so tests can drive the pad
+                   forces, real loads realhand_hardware/RealHandSystem
+    can_interface  SocketCAN device for real hardware
+    can_id         explicit CAN id, empty selects the side default
+    enable_tactile request taxel matrices from the hand
+    taxel_topic    when set, the driver publishes raw taxel grids there
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="realhand_l6_ros2_control"
+    params="name prefix:='' side:=right hardware:=mock can_interface:=can0 can_id:='' enable_tactile:=true taxel_topic:=''">
+
+    <xacro:macro name="actuated" params="joint upper">
+      <joint name="${prefix}${joint}">
+        <command_interface name="position">
+          <param name="min">0.0</param>
+          <param name="max">${upper}</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+
+    <xacro:macro name="mimic" params="joint">
+      <joint name="${prefix}${joint}">
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </xacro:macro>
+
+    <xacro:macro name="tactile" params="finger">
+      <sensor name="${prefix}tactile_${finger}">
+        <state_interface name="force"/>
+      </sensor>
+    </xacro:macro>
+
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${hardware == 'mock'}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="mock_sensor_commands">true</param>
+        </xacro:if>
+        <xacro:if value="${hardware == 'real'}">
+          <plugin>realhand_hardware/RealHandSystem</plugin>
+          <param name="model">L6</param>
+          <param name="hand_side">${side}</param>
+          <param name="joint_prefix">${prefix}</param>
+          <param name="can_interface">${can_interface}</param>
+          <xacro:unless value="${can_id == ''}">
+            <param name="can_id">${can_id}</param>
+          </xacro:unless>
+          <param name="enable_tactile">${enable_tactile}</param>
+          <xacro:unless value="${taxel_topic == ''}">
+            <param name="taxel_topic">${taxel_topic}</param>
+          </xacro:unless>
+        </xacro:if>
+      </hardware>
+
+      <xacro:actuated joint="thumb_cmc_pitch" upper="0.52"/>
+      <xacro:actuated joint="thumb_cmc_yaw" upper="1.54"/>
+      <xacro:actuated joint="index_mcp_pitch" upper="1.57"/>
+      <xacro:actuated joint="middle_mcp_pitch" upper="1.57"/>
+      <xacro:actuated joint="ring_mcp_pitch" upper="1.57"/>
+      <xacro:actuated joint="pinky_mcp_pitch" upper="1.57"/>
+
+      <xacro:mimic joint="thumb_ip"/>
+      <xacro:mimic joint="index_dip"/>
+      <xacro:mimic joint="middle_dip"/>
+      <xacro:mimic joint="ring_dip"/>
+      <xacro:mimic joint="pinky_dip"/>
+
+      <xacro:tactile finger="thumb"/>
+      <xacro:tactile finger="index"/>
+      <xacro:tactile finger="middle"/>
+      <xacro:tactile finger="ring"/>
+      <xacro:tactile finger="pinky"/>
+    </ros2_control>
+
+  </xacro:macro>
+</robot>

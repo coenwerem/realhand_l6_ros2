@@ -1,0 +1,348 @@
+<?xml version="1.0"?>
+<!--
+  RealHand L6 hand macro. Right hand geometry is verbatim from the vendor
+  URDF as validated on hardware. The left hand is the mirror across the
+  palm plane (y negated, roll and yaw negated, thumb yaw axis flipped),
+  which matches the vendor left URDF joint by joint. Joint limits are the
+  values calibrated against the L6 CAN scaling and match the driver's model
+  table for both sides. The left limits are unvalidated on a left unit.
+
+  Params
+    prefix   prepended to every link and joint name, for example right_
+    side     right or left, selects meshes and mirroring
+    parent   link the hand base attaches to
+    *origin  origin block for the attachment joint
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="realhand_l6" params="prefix:='' side:=right parent *origin">
+
+    <xacro:property name="reflect" value="${1 if side == 'right' else -1}"/>
+    <xacro:property name="mesh_dir" value="package://realhand_l6_description/meshes/l6_${side}"/>
+
+    <material name="${prefix}realhand_palm"><color rgba="0 0 0 1"/></material>
+    <material name="${prefix}realhand_finger"><color rgba="0.2 0.2 0.2 1"/></material>
+
+    <joint name="${prefix}hand_mount" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}hand_base_link"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <link name="${prefix}hand_base_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/hand_base_link.stl"/></geometry>
+        <material name="${prefix}realhand_palm"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/hand_base_link.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00160320773490556 ${0.000358462699237561*reflect} 0.0538002704027215" rpy="0 0 0"/>
+        <mass value="0.06740077960995"/>
+        <inertia ixx="5.22359941041901E-05" ixy="${3.0391535852764E-07*reflect}" ixz="3.88322215371643E-07" iyy="3.33473043513648E-05" iyz="${-7.77555280794861E-07*reflect}" izz="2.28342677422006E-05"/>
+      </inertial>
+    </link>
+    <link name="${prefix}thumb_metacarpals_base2">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_metacarpals_base2.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_metacarpals_base2.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.00162795738393507 ${0.00276671978336815*reflect} -0.00184227725602707" rpy="0 0 0"/>
+        <mass value="0.00138591070212997"/>
+        <inertia ixx="5.26294625624223E-08" ixy="${-3.9288013799604E-09*reflect}" ixz="2.43766268199571E-09" iyy="4.82623724532942E-08" iyz="${3.71867754115443E-09*reflect}" izz="2.88555522060562E-08"/>
+      </inertial>
+    </link>
+    <link name="${prefix}thumb_metacarpals">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_metacarpals.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_metacarpals.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="4.24920612856275E-05 ${-1.67885666835232E-05*reflect} 0.0228341522590467" rpy="0 0 0"/>
+        <mass value="0.0123381607727595"/>
+        <inertia ixx="1.10292488693766E-06" ixy="${-6.14241939151719E-10*reflect}" ixz="1.14233108676795E-07" iyy="1.76757658485787E-06" iyz="${-4.24576599367025E-10*reflect}" izz="9.36348143657406E-07"/>
+      </inertial>
+    </link>
+    <link name="${prefix}thumb_distal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_distal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/thumb_distal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00413690727496815 ${-4.54842793429222E-07*reflect} 0.0230097179163771" rpy="0 0 0"/>
+        <mass value="0.00763302603723749"/>
+        <inertia ixx="1.30546842791578E-06" ixy="${-2.61617511029467E-12*reflect}" ixz="7.19030685242407E-08" iyy="1.22457212713176E-06" iyz="${1.66931068485225E-11*reflect}" izz="2.7729897944409E-07"/>
+      </inertial>
+    </link>
+    <link name="${prefix}index_proximal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/index_proximal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/index_proximal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00208665596033792 ${-4.8964990644329E-06*reflect} 0.0172736718900068" rpy="0 0 0"/>
+        <mass value="0.00253178529301663"/>
+        <inertia ixx="2.65990159539482E-07" ixy="${-3.55165625722842E-11*reflect}" ixz="4.31046335852167E-08" iyy="2.72915460277804E-07" iyz="${1.75935978708959E-10*reflect}" izz="8.56026306687528E-08"/>
+      </inertial>
+    </link>
+    <link name="${prefix}index_distal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/index_distal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/index_distal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.00658940011630532 ${-4.59976557022623E-06*reflect} 0.0194434136420913" rpy="0 0 0"/>
+        <mass value="0.00376787129082313"/>
+        <inertia ixx="3.22116619426455E-07" ixy="${1.03152735699049E-11*reflect}" ixz="-1.14363506430985E-07" iyy="3.65131844686317E-07" iyz="${-1.97263639269362E-10*reflect}" izz="1.24256890612907E-07"/>
+      </inertial>
+    </link>
+    <link name="${prefix}middle_proximal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/middle_proximal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/middle_proximal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00208661081773556 ${-4.93451838476378E-06*reflect} 0.0172736805321904" rpy="0 0 0"/>
+        <mass value="0.00253175497594429"/>
+        <inertia ixx="2.65989683690695E-07" ixy="${-3.58343951791586E-11*reflect}" ixz="4.31048601085216E-08" iyy="2.72915006047006E-07" iyz="${1.75718024412593E-10*reflect}" izz="8.56020467202518E-08"/>
+      </inertial>
+    </link>
+    <link name="${prefix}middle_distal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/middle_distal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/middle_distal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.00658940304809306 ${-4.5885743593238E-06*reflect} 0.0194434523296449" rpy="0 0 0"/>
+        <mass value="0.00376786259758948"/>
+        <inertia ixx="3.221153658306E-07" ixy="${1.02639617308432E-11*reflect}" ixz="-1.14363547272711E-07" iyy="3.65130723083104E-07" iyz="${-1.96904618797577E-10*reflect}" izz="1.24256787913797E-07"/>
+      </inertial>
+    </link>
+    <link name="${prefix}ring_proximal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/ring_proximal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/ring_proximal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00208654311325356 ${-4.98538564003281E-06*reflect} 0.0172736743497407" rpy="0 0 0"/>
+        <mass value="0.00253170963529411"/>
+        <inertia ixx="2.6598913795678E-07" ixy="${-3.62757108675266E-11*reflect}" ixz="4.31050611555507E-08" iyy="2.72914417061517E-07" iyz="${1.75554984053478E-10*reflect}" izz="8.56012458677515E-08"/>
+      </inertial>
+    </link>
+    <link name="${prefix}ring_distal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/ring_distal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/ring_distal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.00658940273069729 ${-4.56628863591824E-06*reflect} 0.0194435005686854" rpy="0 0 0"/>
+        <mass value="0.0037678395356105"/>
+        <inertia ixx="3.22112632437858E-07" ixy="${1.01848408913558E-11*reflect}" ixz="-1.1436348915342E-07" iyy="3.65128262095686E-07" iyz="${-1.96145632992445E-10*reflect}" izz="1.24256284608064E-07"/>
+      </inertial>
+    </link>
+    <link name="${prefix}pinky_proximal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/pinky_proximal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/pinky_proximal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="-0.00208649034130813 ${-5.02314582560837E-06*reflect} 0.0172736680793697" rpy="0 0 0"/>
+        <mass value="0.00253167400540778"/>
+        <inertia ixx="2.65988718820404E-07" ixy="${-3.66012295280295E-11*reflect}" ixz="4.31052220484445E-08" iyy="2.72913936904813E-07" iyz="${1.75447396222308E-10*reflect}" izz="8.56006424720129E-08"/>
+      </inertial>
+    </link>
+    <link name="${prefix}pinky_distal">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/pinky_distal.stl"/></geometry>
+        <material name="${prefix}realhand_finger"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><mesh filename="${mesh_dir}/pinky_distal.stl"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0.00658940431519205 ${-4.55268314210333E-06*reflect} 0.0194435341098305" rpy="0 0 0"/>
+        <mass value="0.00376782669873412"/>
+        <inertia ixx="3.22111112339498E-07" ixy="${1.01707985908333E-11*reflect}" ixz="-1.14363524419061E-07" iyy="3.65126916899176E-07" iyz="${-1.95589215866356E-10*reflect}" izz="1.24256004854426E-07"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}thumb_cmc_yaw" type="revolute">
+      <origin xyz="0.011508 ${0.022975*reflect} 0.032794" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}thumb_metacarpals_base2"/>
+      <axis xyz="0 0 ${-reflect}"/>
+      <limit lower="-0.01" upper="1.54" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}thumb_cmc_pitch" type="revolute">
+      <origin xyz="0.0061649 ${0.010678*reflect} -0.004891" rpy="${0*reflect} -1.1529 ${-2.0944*reflect}"/>
+      <parent link="${prefix}thumb_metacarpals_base2"/>
+      <child link="${prefix}thumb_metacarpals"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="0.52" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}thumb_ip" type="revolute">
+      <origin xyz="0.0037776 ${0*reflect} 0.045368" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}thumb_metacarpals"/>
+      <child link="${prefix}thumb_distal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0" upper="0.96" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+      <mimic joint="${prefix}thumb_cmc_pitch" multiplier="1.83" offset="0"/>
+    </joint>
+    <joint name="${prefix}index_mcp_pitch" type="revolute">
+      <origin xyz="0.0024758 ${0.02419*reflect} 0.098779" rpy="${-0.05236*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}index_proximal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.57" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}index_dip" type="revolute">
+      <origin xyz="-0.0052516 ${0*reflect} 0.036625" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}index_proximal"/>
+      <child link="${prefix}index_distal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.4" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+      <mimic joint="${prefix}index_mcp_pitch" multiplier="0.89" offset="0"/>
+    </joint>
+    <joint name="${prefix}middle_mcp_pitch" type="revolute">
+      <origin xyz="0.00052576 ${0.00634*reflect} 0.1027" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}middle_proximal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.57" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}middle_dip" type="revolute">
+      <origin xyz="-0.0052516 ${0*reflect} 0.036625" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}middle_proximal"/>
+      <child link="${prefix}middle_distal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.4" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+      <mimic joint="${prefix}middle_mcp_pitch" multiplier="0.89" offset="0"/>
+    </joint>
+    <joint name="${prefix}ring_mcp_pitch" type="revolute">
+      <origin xyz="0.0010258 ${-0.011135*reflect} 0.098767" rpy="${0.05236*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}ring_proximal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.57" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}ring_dip" type="revolute">
+      <origin xyz="-0.0052516 ${0*reflect} 0.036625" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}ring_proximal"/>
+      <child link="${prefix}ring_distal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.4" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+      <mimic joint="${prefix}ring_mcp_pitch" multiplier="0.89" offset="0"/>
+    </joint>
+    <joint name="${prefix}pinky_mcp_pitch" type="revolute">
+      <origin xyz="0.0024758 ${-0.028372*reflect} 0.092741" rpy="${0.087266*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}pinky_proximal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.57" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+    </joint>
+    <joint name="${prefix}pinky_dip" type="revolute">
+      <origin xyz="-0.0052516 ${0*reflect} 0.036625" rpy="${0*reflect} 0 ${0*reflect}"/>
+      <parent link="${prefix}pinky_proximal"/>
+      <child link="${prefix}pinky_distal"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.01" upper="1.4" effort="100" velocity="1"/>
+      <dynamics damping="0.1"/>
+      <mimic joint="${prefix}pinky_mcp_pitch" multiplier="0.89" offset="0"/>
+    </joint>
+
+    <!-- Tool center point at the palm center. -->
+    <joint name="${prefix}hand_to_tcp" type="fixed">
+      <parent link="${prefix}hand_base_link"/>
+      <child link="${prefix}tcp"/>
+      <origin xyz="0 0 0.04" rpy="0 0 0"/>
+    </joint>
+    <link name="${prefix}tcp"/>
+
+    <!--
+      Tactile pad frames on each distal link. z points out of the pad toward
+      the grip, x runs along the finger, y across the pad. The window is
+      12 taxels by 6 taxels, 14.4 mm by 9.6 mm. The four fingers share one
+      distal geometry, the thumb differs.
+    -->
+    <xacro:macro name="pad_frame" params="finger xyz rpy">
+      <joint name="${prefix}${finger}_pad_joint" type="fixed">
+        <parent link="${prefix}${finger}_distal"/>
+        <child link="${prefix}${finger}_pad"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+      <link name="${prefix}${finger}_pad"/>
+    </xacro:macro>
+    <xacro:pad_frame finger="thumb" xyz="-0.000684 ${-0.000033*reflect} 0.039049" rpy="0 -1.3943 ${3.1416*reflect}"/>
+    <xacro:pad_frame finger="index" xyz="0.015649 ${0.000028*reflect} 0.031067" rpy="${3.1416*reflect} -1.4321 0"/>
+    <xacro:pad_frame finger="middle" xyz="0.015649 ${0.000028*reflect} 0.031067" rpy="${3.1416*reflect} -1.4321 0"/>
+    <xacro:pad_frame finger="ring" xyz="0.015649 ${0.000028*reflect} 0.031067" rpy="${3.1416*reflect} -1.4321 0"/>
+    <xacro:pad_frame finger="pinky" xyz="0.015649 ${0.000028*reflect} 0.031067" rpy="${3.1416*reflect} -1.4321 0"/>
+
+  </xacro:macro>
+</robot>

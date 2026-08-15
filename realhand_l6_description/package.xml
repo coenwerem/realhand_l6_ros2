@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>realhand_l6_description</name>
+  <version>0.1.0</version>
+  <description>URDF, meshes, ros2_control macro, and RViz configuration for the RealHand L6 dexterous hand, right and left.</description>
+  <maintainer email="enwerem@terpmail.umd.edu">Clinton Enwerem</maintainer>
+  <license>Apache-2.0</license>
+  <author email="enwerem@terpmail.umd.edu">Clinton Enwerem</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>liburdfdom-tools</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
