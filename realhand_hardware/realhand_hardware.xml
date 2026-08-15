@@ -1,0 +1,9 @@
+<library path="realhand_hardware">
+  <class name="realhand_hardware/RealHandSystem"
+         type="realhand_hardware::RealHandSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control SystemInterface for RealHand dexterous hands over SocketCAN.
+    </description>
+  </class>
+</library>
