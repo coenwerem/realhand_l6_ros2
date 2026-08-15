@@ -21,9 +21,11 @@ By contrast, the third clip shows the contact gated close on the mock stack, eac
 
 ## Packages
 
+Each package has its own README with the full tables.
+
 | Package | Content |
 |---|---|
-| `realhand_hardware` | `hardware_interface::SystemInterface` plugin `realhand_hardware/RealHandSystem`. Speaks the RealHand CAN frame family over SocketCAN, position command and state for the actuated joints, synthesized state for the coupled distal joints, and one summed force state interface per tactile pad. Per model constants live in a table selected by a `model` parameter. |
+| `realhand_hardware` | `hardware_interface::SystemInterface` plugin `realhand_hardware/RealHandSystem`. Speaks the RealHand CAN frame family over SocketCAN, position command and state for the actuated joints, synthesized state for the coupled distal joints, one summed force state interface per tactile pad, and optional per joint speed and torque command interfaces. Per model constants live in a table selected by a `model` parameter. |
 | `realhand_contact_controller` | `controller_interface::ControllerInterface` plugin `realhand_contact_controller/ContactGatedController`. Closes each finger toward a target and freezes the finger the moment its pad crosses a force threshold, reports gripped versus closed on air, ungated open, monitor only mode. Real time safe publishing, parameters through `generate_parameter_library`. |
 | `realhand_l6_description` | Xacro macro for the L6, right and left, meshes, `<finger>_pad` frames on each distal link, tool center point, and a `ros2_control` macro switching between `mock_components/GenericSystem` and the real driver. |
 | `realhand_l6_bringup` | Launch files for mock, virtual CAN, and hardware, controller configuration, RViz contact markers, an emulated hand for `vcan0`, a pad force ramp for the mock, and a read only CAN probe. |
@@ -66,7 +68,7 @@ Bring `can0` up at 1 Mbit/s with the hand powered, then run the read only monito
 
 ```bash
 sudo ip link set can0 up type can bitrate 1000000
-ros2 launch realhand_l6_bringup hardware.launch.py monitor_only:=true
+ros2 launch realhand_l6_bringup hardware.launch.py controller:=monitor
 ros2 topic echo /tactile_monitor/finger_force
 ```
 
@@ -76,59 +78,29 @@ Next, the full stack replaces the monitor with the contact gated controller.
 ros2 launch realhand_l6_bringup hardware.launch.py side:=right can_interface:=can0
 ```
 
+## Standard controllers on the position interface
+
+The driver exports a plain `position` command interface per actuated joint, so any position controller works, not only the contact gated one. `controllers.yaml` in `realhand_l6_bringup` ships a `joint_trajectory_controller` for planners and scripts and a forward position controller for direct setpoints, and `hardware.launch.py` picks one with `controller:=trajectory` or `controller:=position`. Only one position controller can be active at a time, and `ros2 control switch_controllers` swaps them at runtime.
+
+```bash
+ros2 launch realhand_l6_bringup hardware.launch.py controller:=trajectory
+ros2 action send_goal /hand_trajectory_controller/follow_joint_trajectory \
+  control_msgs/action/FollowJointTrajectory \
+  "{trajectory: {joint_names: [thumb_cmc_pitch, thumb_cmc_yaw, index_mcp_pitch, middle_mcp_pitch, ring_mcp_pitch, pinky_mcp_pitch], points: [{positions: [0.3, 0.8, 1.0, 1.0, 1.0, 1.0], time_from_start: {sec: 2}}]}}"
+```
+
+Beyond position, every actuated joint also exports `speed` and `torque` command interfaces, raw 0 to 255 setpoints the hand applies per joint, seeded from `activation_speed` and `activation_torque` and sent as one frame per type on change. `setpoint_controllers:=true` spawns forward controllers on both, so a script can slow the close before contact or cap grip torque after latch while any position controller runs.
+
+```bash
+ros2 topic pub --once /hand_speed_controller/commands std_msgs/msg/Float64MultiArray "{data: [40, 40, 40, 40, 40, 40]}"
+ros2 topic pub --once /hand_torque_controller/commands std_msgs/msg/Float64MultiArray "{data: [120, 120, 120, 120, 120, 120]}"
+```
+
 In addition, for a check independent of ROS, `ros2 run realhand_l6_bringup can_tactile_probe --interface can0` sends only matrix read requests and prints per finger sums and row rates. Run the probe with nothing else on the bus so the rate you read is the hand's own.
 
-## Driver parameters
+## Interfaces and parameters
 
-Set inside the `<hardware>` block of the `ros2_control` tag. Every parameter is optional.
-
-| Parameter | Default | Meaning |
-|---|---|---|
-| `model` | `L6` | Hand model, selects the joint table, mimic ratios, taxel geometry, and CAN ids |
-| `can_interface` | `can0` | SocketCAN device |
-| `hand_side` | `right` | `right` or `left`, selects the default CAN id (0x27 right, 0x28 left) |
-| `can_id` | side default | Explicit CAN id, base 10 or 0x hex |
-| `joint_prefix` | `<hand_side>_` | Prefix stripped from URDF joint and sensor names before lookup, bare names always work |
-| `enable_tactile` | `true` | Request taxel matrices from the hand |
-| `tactile_period_ms` | `50` | Period of the matrix request burst |
-| `position_request_decimation` | `4` | Request joint position every N control cycles, each request preempts the tactile stream |
-| `activation_speed` | `80` | Speed byte sent on activation, 0 to 255 |
-| `activation_torque` | `200` | Torque byte sent on activation, 0 to 255 |
-| `taxel_topic` | unset | When set, publish the raw taxel grids as JSON on the named topic from the receiver thread |
-
-In practice, exported interfaces come from the `ros2_control` XML. Actuated joints take a `position` command and report `position`, mimic joints report `position`, a `velocity` state interface is filled with zero where declared, and each sensor `tactile_<finger>` reports `force`, the sum of its 12 by 6 taxel grid. The `realhand_l6_description` macro `realhand_l6_ros2_control` writes the whole interface block for you.
-
-## Contact gated controller
-
-Topics live under the controller name.
-
-| Topic | Type | Direction | Meaning |
-|---|---|---|---|
-| `~/close_to` | `sensor_msgs/JointState` | in | Target per command joint, starts a contact gated close |
-| `~/open` | `std_msgs/Bool` | in | `true` moves every joint to `open_position` without contact gating |
-| `~/contact_state` | `std_msgs/Int32MultiArray` | out | One code per finger, see below |
-| `~/finger_force` | `std_msgs/Float64MultiArray` | out | Summed pad force per finger |
-
-| Code | Meaning |
-|---|---|
-| 0 | no contact |
-| 2 | contact sensed, finger still moving or no close in progress |
-| 1 | latched on contact during a gated close, gripped |
-| 3 | latched at the commanded target with no contact seen, closed on air |
-
-Similarly, the parameters below are all validated at configure time.
-
-| Parameter | Default | Meaning |
-|---|---|---|
-| `command_joints` | the six L6 joints | Position command interfaces the controller claims |
-| `finger_names` | `[thumb, index, middle, ring, pinky]` | Pads, in the same order as `flexion_joints` |
-| `flexion_joints` | five L6 flexion joints | One per finger, gated by the pad of the same finger |
-| `thumb_opposition_joint` | `thumb_cmc_yaw` | Driven to target without gating, empty disables |
-| `sensor_prefix` | `tactile_` | Prefix of the sensor names |
-| `contact_threshold` | `300.0` | Summed pad force at which a finger counts as touching |
-| `close_step` | `0.01` | Radians per update toward the target |
-| `open_position` | `0.0` | Target of an open request |
-| `monitor_only` | `false` | Claim no command interfaces, publish only |
+Each package README holds its own tables. [realhand_hardware](realhand_hardware/README.md) lists the exported interfaces and every driver parameter, [realhand_contact_controller](realhand_contact_controller/README.md) the topics, contact codes, and controller parameters, [realhand_l6_description](realhand_l6_description/README.md) the macro arguments, and [realhand_l6_bringup](realhand_l6_bringup/README.md) the launch arguments, controllers, and entry points.
 
 ## Which RealHand models
 
@@ -138,7 +110,7 @@ In particular, the left L6 geometry is the mirror of the validated right hand an
 
 ## Tests
 
-`colcon test` runs gtest on the CAN codec and model table, gtest on the controller state machine with loaned interfaces the test owns (latch on contact, closed on air, ungated open, thumb opposition ordering, monitor only), a pytest over the xacro for both sides and both hardware plugins, a `launch_testing` run of the whole mock stack, and a `launch_testing` run of the real driver on `vcan0`, skipped when the interface is absent. CI runs the same suite on Jazzy for every push.
+`colcon test` runs gtest on the CAN codec and model table, gtest on the controller state machine with loaned interfaces the test owns (latch on contact, closed on air, ungated open, thumb opposition ordering, monitor only), a pytest over the xacro for both sides and both hardware plugins, a `launch_testing` run of the whole mock stack including a `FollowJointTrajectory` goal through the trajectory controller, and a `launch_testing` run of the real driver on `vcan0` that also checks speed setpoints reach the bus, skipped when the interface is absent. CI runs the same suite on Jazzy for every push.
 
 ## Citing
 

@@ -86,11 +86,19 @@ def test_ros2_control_block(hardware):
     joints = {j.attrib['name']: j for j in block.findall('joint')}
     for name in ACTUATED:
         j = joints['right_' + name]
-        assert j.find('command_interface').attrib['name'] == 'position'
+        commands = {c.attrib['name'] for c in j.findall('command_interface')}
+        assert commands == {'position', 'speed', 'torque'}
     for name in MIMIC:
         assert joints['right_' + name].find('command_interface') is None
     sensors = {s.attrib['name'] for s in block.findall('sensor')}
     assert sensors == {'right_tactile_' + f for f in FINGERS}
+
+
+def test_setpoints_can_be_left_out():
+    root = ET.fromstring(render(hardware='real', setpoints='false'))
+    for j in root.find('ros2_control').findall('joint'):
+        commands = {c.attrib['name'] for c in j.findall('command_interface')}
+        assert commands in ({'position'}, set())
 
 
 def test_no_hardware_block_by_default():
