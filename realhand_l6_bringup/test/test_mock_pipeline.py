@@ -18,6 +18,8 @@ Launches mock.launch.py without RViz or the ramp, presses the index pad
 through the forward command controller, requests a close, and checks that
 the index finger latches in place while the other fingers reach the target
 and report a miss. Then opens and checks every joint returns to zero.
+A second case swaps in the joint trajectory controller and drives the hand
+through a FollowJointTrajectory goal, the path a planner uses.
 """
 
 import os
@@ -25,6 +27,9 @@ import time
 import unittest
 
 from ament_index_python.packages import get_package_share_directory
+from builtin_interfaces.msg import Duration
+from control_msgs.action import FollowJointTrajectory
+from controller_manager_msgs.srv import SwitchController
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -32,9 +37,11 @@ import launch_testing
 import launch_testing.actions
 import pytest
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Float64MultiArray, Int32MultiArray
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 JOINTS = ['thumb_cmc_pitch', 'thumb_cmc_yaw', 'index_mcp_pitch', 'middle_mcp_pitch',
           'ring_mcp_pitch', 'pinky_mcp_pitch']
@@ -105,6 +112,36 @@ class Probe(Node):
     def open_hand(self):
         self.open_pub.publish(Bool(data=True))
 
+    def switch_controllers(self, activate, deactivate):
+        client = self.create_client(SwitchController, '/controller_manager/switch_controller')
+        assert client.wait_for_service(timeout_sec=10.0), 'switch_controller service'
+        req = SwitchController.Request()
+        req.activate_controllers = activate
+        req.deactivate_controllers = deactivate
+        req.strictness = SwitchController.Request.STRICT
+        req.activate_asap = True
+        req.timeout = Duration(sec=5)
+        future = client.call_async(req)
+        rclpy.spin_until_future_complete(self, future, timeout_sec=15.0)
+        assert future.done() and future.result().ok, f'switch to {activate} failed'
+
+    def follow_trajectory(self, positions, seconds):
+        client = ActionClient(
+            self, FollowJointTrajectory, '/hand_trajectory_controller/follow_joint_trajectory')
+        assert client.wait_for_server(timeout_sec=10.0), 'trajectory action server'
+        goal = FollowJointTrajectory.Goal()
+        goal.trajectory.joint_names = JOINTS
+        goal.trajectory.points = [JointTrajectoryPoint(
+            positions=positions, time_from_start=Duration(sec=seconds))]
+        send = client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self, send, timeout_sec=10.0)
+        handle = send.result()
+        assert handle is not None and handle.accepted, 'trajectory goal rejected'
+        result = handle.get_result_async()
+        rclpy.spin_until_future_complete(self, result, timeout_sec=seconds + 10.0)
+        assert result.done(), 'trajectory did not finish'
+        return result.result().result.error_code
+
 
 class TestMockPipeline(unittest.TestCase):
 
@@ -143,6 +180,25 @@ class TestMockPipeline(unittest.TestCase):
         p.spin_for(0.3)
         self.assertEqual(p.contact[1], 2)
         self.assertEqual(p.contact[3], 0)
+
+    def test_joint_trajectory_controller_drives_the_hand(self):
+        p = self.probe
+        p.wait_until(lambda: 'index_mcp_pitch' in p.joint_positions, timeout=30.0,
+                     what='joint states')
+        # The trajectory controller and the contact controller both claim the
+        # position command interfaces, so the switch is exclusive.
+        p.switch_controllers(activate=['hand_trajectory_controller'],
+                             deactivate=['contact_gated_controller'])
+        target = [0.3, 0.8, 1.0, 1.0, 1.0, 1.0]
+        code = p.follow_trajectory(target, seconds=2)
+        self.assertEqual(code, FollowJointTrajectory.Result.SUCCESSFUL)
+        p.spin_for(0.5)
+        for j, v in zip(JOINTS, target):
+            self.assertAlmostEqual(p.joint_positions[j], v, places=2)
+        # Mimic joints follow, thumb_ip at 1.83 times thumb_cmc_pitch.
+        self.assertAlmostEqual(p.joint_positions['thumb_ip'], 0.3 * 1.83, places=2)
+        p.switch_controllers(activate=['contact_gated_controller'],
+                             deactivate=['hand_trajectory_controller'])
 
 
 @launch_testing.post_shutdown_test()

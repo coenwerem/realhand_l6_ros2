@@ -21,7 +21,9 @@ every finger, and a close request latches all five with the joint state
 frozen short of the target.
 """
 
+import json
 import os
+import tempfile
 import time
 import unittest
 
@@ -35,9 +37,10 @@ import pytest
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Float64MultiArray, Int32MultiArray
 
 VCAN = os.environ.get('REALHAND_TEST_VCAN', 'vcan0')
+RECORD = os.path.join(tempfile.gettempdir(), 'realhand_vcan_setpoints.jsonl')
 JOINTS = ['thumb_cmc_pitch', 'thumb_cmc_yaw', 'index_mcp_pitch', 'middle_mcp_pitch',
           'ring_mcp_pitch', 'pinky_mcp_pitch']
 
@@ -56,7 +59,8 @@ def generate_test_description():
             PythonLaunchDescriptionSource(launch_file),
             launch_arguments={'can_interface': VCAN, 'use_rviz': 'false',
                               'auto_close': 'false', 'contact_delay': '2.0',
-                              'ramp': '0.5'}.items()))
+                              'ramp': '0.5', 'record': RECORD,
+                              'setpoint_controllers': 'true'}.items()))
     else:
         # launch_testing needs a live process under test while the skip runs.
         actions.append(ExecuteProcess(cmd=['sleep', '600'], name='vcan_absent'))
@@ -75,6 +79,8 @@ class Probe(Node):
             Int32MultiArray, '/contact_gated_controller/contact_state', self._on_contact, 10)
         self.close_pub = self.create_publisher(
             JointState, '/contact_gated_controller/close_to', 10)
+        self.speed_pub = self.create_publisher(
+            Float64MultiArray, '/hand_speed_controller/commands', 10)
 
     def _on_js(self, msg):
         self.joint_positions = dict(zip(msg.name, msg.position))
@@ -98,11 +104,24 @@ class Probe(Node):
         msg.position = [target] * len(JOINTS)
         self.close_pub.publish(msg)
 
+    def set_speed(self, value):
+        self.speed_pub.publish(Float64MultiArray(data=[float(value)] * len(JOINTS)))
+
+
+def recorded_frames(kind):
+    if not os.path.exists(RECORD):
+        return []
+    with open(RECORD) as f:
+        rows = [json.loads(line) for line in f if line.strip()]
+    return [r['values'] for r in rows if r['frame'] == kind]
+
 
 class TestVcanPipeline(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if os.path.exists(RECORD):
+            os.remove(RECORD)
         rclpy.init()
         cls.probe = Probe()
 
@@ -133,6 +152,14 @@ class TestVcanPipeline(unittest.TestCase):
                      timeout=10.0, what='thumb opposition to reach target')
         for j in ('index_mcp_pitch', 'middle_mcp_pitch', 'ring_mcp_pitch', 'pinky_mcp_pitch'):
             self.assertLess(p.joint_positions[j], 0.1)
+
+        # Activation sent the default speed and torque frames.
+        self.assertIn([80] * len(JOINTS), recorded_frames('speed'))
+        self.assertIn([200] * len(JOINTS), recorded_frames('torque'))
+        # A speed setpoint through the forward controller reaches the bus as
+        # one 0x05 frame with the new bytes.
+        p.wait_until(lambda: [50] * len(JOINTS) in recorded_frames('speed'), timeout=10.0,
+                     what='speed setpoint frame on the bus', repeat=lambda: p.set_speed(50))
 
 
 @launch_testing.post_shutdown_test()

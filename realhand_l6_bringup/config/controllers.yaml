@@ -12,6 +12,23 @@ controller_manager:
     tactile_monitor:
       type: realhand_contact_controller/ContactGatedController
 
+    # Standard controllers on the position command interface. Spawn one of
+    # these instead of contact_gated_controller when a planner or a script
+    # drives the hand.
+    hand_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    hand_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    # Raw speed and torque setpoints, 0 to 255, on the driver's speed and
+    # torque command interfaces. Both may run next to any position controller.
+    hand_speed_controller:
+      type: forward_command_controller/ForwardCommandController
+
+    hand_torque_controller:
+      type: forward_command_controller/ForwardCommandController
+
     # Mock only. Writes the fake sensor command interfaces that
     # mock_components/GenericSystem creates with mock_sensor_commands, so a
     # test or the ramp node can set each pad force.
@@ -83,3 +100,54 @@ tactile_mock_controller:
       - tactile_ring
       - tactile_pinky
     interface_name: force
+
+hand_trajectory_controller:
+  ros__parameters:
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+    allow_partial_joints_goal: true
+    constraints:
+      stopped_velocity_tolerance: 0.0
+      goal_time: 0.0
+
+hand_position_controller:
+  ros__parameters:
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    interface_name: position
+
+hand_speed_controller:
+  ros__parameters:
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    interface_name: speed
+
+hand_torque_controller:
+  ros__parameters:
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    interface_name: torque

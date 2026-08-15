@@ -13,11 +13,13 @@
     can_id         explicit CAN id, empty selects the side default
     enable_tactile request taxel matrices from the hand
     taxel_topic    when set, the driver publishes raw taxel grids there
+    setpoints      add speed and torque command interfaces (raw 0 to 255)
+                   to every actuated joint, default true
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="realhand_l6_ros2_control"
-    params="name prefix:='' side:=right hardware:=mock can_interface:=can0 can_id:='' enable_tactile:=true taxel_topic:=''">
+    params="name prefix:='' side:=right hardware:=mock can_interface:=can0 can_id:='' enable_tactile:=true taxel_topic:='' setpoints:=true">
 
     <xacro:macro name="actuated" params="joint upper">
       <joint name="${prefix}${joint}">
@@ -25,6 +27,16 @@
           <param name="min">0.0</param>
           <param name="max">${upper}</param>
         </command_interface>
+        <xacro:if value="${setpoints}">
+          <command_interface name="speed">
+            <param name="min">0</param>
+            <param name="max">255</param>
+          </command_interface>
+          <command_interface name="torque">
+            <param name="min">0</param>
+            <param name="max">255</param>
+          </command_interface>
+        </xacro:if>
         <state_interface name="position">
           <param name="initial_value">0.0</param>
         </state_interface>

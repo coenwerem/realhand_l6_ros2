@@ -10,6 +10,7 @@
     can_id         explicit CAN id, empty selects the side default
     enable_tactile request taxel matrices from the hand
     taxel_topic    optional raw taxel JSON topic
+    setpoints      speed and torque command interfaces on actuated joints
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="realhand_l6">
 
@@ -20,6 +21,7 @@
   <xacro:arg name="can_id" default=""/>
   <xacro:arg name="enable_tactile" default="true"/>
   <xacro:arg name="taxel_topic" default=""/>
+  <xacro:arg name="setpoints" default="true"/>
 
   <xacro:include filename="realhand_l6_macro.xacro"/>
   <xacro:include filename="realhand_l6.ros2_control.xacro"/>
@@ -39,7 +41,8 @@
       can_interface="$(arg can_interface)"
       can_id="$(arg can_id)"
       enable_tactile="$(arg enable_tactile)"
-      taxel_topic="$(arg taxel_topic)"/>
+      taxel_topic="$(arg taxel_topic)"
+      setpoints="$(arg setpoints)"/>
   </xacro:unless>
 
 </robot>

@@ -14,26 +14,37 @@
 
 """Real hand on a real CAN bus.
 
-Default brings up the driver, joint state broadcaster, and the contact gated
-controller. With monitor_only:=true the read only tactile_monitor controller
-runs instead and nothing commands motion, which is the first thing to run
-on a new hand.
+The controller argument picks what drives the hand. contact runs the
+contact gated controller, trajectory a joint_trajectory_controller for
+planners and scripts, position a forward position controller, and monitor
+the read only tactile monitor that commands nothing, the first thing to run
+on a new hand. setpoint_controllers adds forward controllers on the driver's
+speed and torque command interfaces next to whichever controller runs.
 
   ros2 launch realhand_l6_bringup hardware.launch.py can_interface:=can0
-  ros2 launch realhand_l6_bringup hardware.launch.py monitor_only:=true
+  ros2 launch realhand_l6_bringup hardware.launch.py controller:=monitor
+  ros2 launch realhand_l6_bringup hardware.launch.py controller:=trajectory
+  ros2 launch realhand_l6_bringup hardware.launch.py setpoint_controllers:=true
 """
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 from realhand_l6_bringup import stack
 
+CONTROLLERS = {
+    'contact': 'contact_gated_controller',
+    'trajectory': 'hand_trajectory_controller',
+    'position': 'hand_position_controller',
+    'monitor': 'tactile_monitor',
+}
+
 
 def generate_launch_description():
-    monitor_only = LaunchConfiguration('monitor_only')
+    controller = LaunchConfiguration('controller')
     description = stack.robot_description(
         hardware='real',
         side=LaunchConfiguration('side'),
@@ -41,14 +52,19 @@ def generate_launch_description():
         can_id=LaunchConfiguration('can_id'),
         enable_tactile=LaunchConfiguration('enable_tactile'),
         taxel_topic=LaunchConfiguration('taxel_topic'))
-    spawn_contact = Node(
-        package='controller_manager', executable='spawner',
-        arguments=['contact_gated_controller', '-c', '/controller_manager'],
-        output='screen', condition=UnlessCondition(monitor_only))
-    spawn_monitor = Node(
-        package='controller_manager', executable='spawner',
-        arguments=['tactile_monitor', '-c', '/controller_manager'],
-        output='screen', condition=IfCondition(monitor_only))
+    spawners = [
+        Node(package='controller_manager', executable='spawner',
+             arguments=[name, '-c', '/controller_manager'], output='screen',
+             condition=IfCondition(PythonExpression(["'", controller, "' == '", key, "'"])))
+        for key, name in CONTROLLERS.items()]
+    setpoint_spawners = [
+        Node(package='controller_manager', executable='spawner',
+             arguments=[name, '-c', '/controller_manager'], output='screen',
+             condition=IfCondition(LaunchConfiguration('setpoint_controllers')))
+        for name in ('hand_speed_controller', 'hand_torque_controller')]
+    # The contact visualizer follows whichever controller publishes contact.
+    viz_controller = PythonExpression([
+        "'tactile_monitor' if '", controller, "' == 'monitor' else 'contact_gated_controller'"])
     return LaunchDescription([
         DeclareLaunchArgument('side', default_value='right', choices=['right', 'left']),
         DeclareLaunchArgument('can_interface', default_value='can0'),
@@ -57,13 +73,14 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_tactile', default_value='true'),
         DeclareLaunchArgument('taxel_topic', default_value='',
                               description='publish raw taxel grids as JSON on this topic'),
-        DeclareLaunchArgument('monitor_only', default_value='false',
-                              description='read only tactile monitor, no motion'),
+        DeclareLaunchArgument('controller', default_value='contact',
+                              choices=list(CONTROLLERS.keys()),
+                              description='which controller drives the hand'),
+        DeclareLaunchArgument('setpoint_controllers', default_value='false',
+                              description='also spawn the speed and torque forward controllers'),
         DeclareLaunchArgument('use_rviz', default_value='true'),
         *stack.control_nodes(description, controllers=('joint_state_broadcaster',)),
-        spawn_contact,
-        spawn_monitor,
-        *stack.viz_nodes(controller=PythonExpression([
-            "'tactile_monitor' if '", monitor_only,
-            "' == 'true' else 'contact_gated_controller'"])),
+        *spawners,
+        *setpoint_spawners,
+        *stack.viz_nodes(controller=viz_controller),
     ])

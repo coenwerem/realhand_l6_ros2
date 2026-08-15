@@ -25,6 +25,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <limits>
 #include <sstream>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
@@ -39,6 +40,11 @@ using hardware_interface::return_type;
 
 namespace
 {
+
+// Custom command interface names for the hand's per joint setpoints. Raw
+// bytes, 0 to 255, the unit the firmware uses.
+constexpr const char * SPEED_INTERFACE = "speed";
+constexpr const char * TORQUE_INTERFACE = "torque";
 
 bool parse_bool(const std::string & v)
 {
@@ -102,6 +108,10 @@ CallbackReturn RealHandSystem::on_init(
   matrix_snapshot_.assign(raw_matrix_.size(), 0);
   command_raw_.assign(n_act, 0);
   last_command_raw_.assign(n_act, 0);
+  speed_raw_.assign(n_act, activation_speed_);
+  last_speed_raw_.assign(n_act, activation_speed_);
+  torque_raw_.assign(n_act, activation_torque_);
+  last_torque_raw_.assign(n_act, activation_torque_);
 
   // Map every URDF joint onto the model table and validate its interfaces.
   joint_slots_.clear();
@@ -110,11 +120,20 @@ CallbackReturn RealHandSystem::on_init(
     const int act = model_->actuated_index(bare);
     const int mim = model_->mimic_index(bare);
     if (act >= 0) {
-      if (joint.command_interfaces.size() != 1 ||
-        joint.command_interfaces[0].name != hardware_interface::HW_IF_POSITION)
-      {
+      bool has_position = false;
+      for (const auto & ci : joint.command_interfaces) {
+        if (ci.name == hardware_interface::HW_IF_POSITION) {
+          has_position = true;
+        } else if (ci.name != SPEED_INTERFACE && ci.name != TORQUE_INTERFACE) {
+          RCLCPP_FATAL(
+            get_logger(), "Actuated joint '%s' declares unsupported command interface '%s'.",
+            joint.name.c_str(), ci.name.c_str());
+          return CallbackReturn::ERROR;
+        }
+      }
+      if (!has_position) {
         RCLCPP_FATAL(
-          get_logger(), "Actuated joint '%s' needs one position command interface.",
+          get_logger(), "Actuated joint '%s' needs a position command interface.",
           joint.name.c_str());
         return CallbackReturn::ERROR;
       }
@@ -202,8 +221,19 @@ CallbackReturn RealHandSystem::on_activate(const rclcpp_lifecycle::State &)
     }
     std::ignore = set_state(position_state_[i], rad, false);
     if (velocity_state_[i]) {std::ignore = set_state(velocity_state_[i], 0.0, false);}
+    if (speed_command_[i]) {
+      std::ignore = set_command(speed_command_[i], static_cast<double>(activation_speed_), false);
+    }
+    if (torque_command_[i]) {
+      std::ignore =
+        set_command(torque_command_[i], static_cast<double>(activation_torque_), false);
+    }
   }
   last_command_raw_ = position_snapshot_;
+  std::fill(speed_raw_.begin(), speed_raw_.end(), activation_speed_);
+  last_speed_raw_ = speed_raw_;
+  std::fill(torque_raw_.begin(), torque_raw_.end(), activation_torque_);
+  last_torque_raw_ = torque_raw_;
 
   RCLCPP_INFO(get_logger(), "%s hand active.", model_->name.c_str());
   return CallbackReturn::SUCCESS;
@@ -298,7 +328,41 @@ return_type RealHandSystem::write(const rclcpp::Time &, const rclcpp::Duration &
         can_interface_.c_str());
     }
   }
+
+  // Speed and torque setpoints, raw bytes, one frame per type on change.
+  // Joints without the interface hold the activation value.
+  for (std::size_t i = 0; i < joint_slots_.size(); ++i) {
+    const auto & slot = joint_slots_[i];
+    if (!slot.actuated) {continue;}
+    double v = std::numeric_limits<double>::quiet_NaN();
+    if (speed_command_[i] && get_command(speed_command_[i], v, false) && std::isfinite(v)) {
+      speed_raw_[slot.index] = static_cast<std::uint8_t>(std::clamp(std::lround(v), 0L, 255L));
+    }
+    if (torque_command_[i] && get_command(torque_command_[i], v, false) && std::isfinite(v)) {
+      torque_raw_[slot.index] = static_cast<std::uint8_t>(std::clamp(std::lround(v), 0L, 255L));
+    }
+  }
+  send_setpoints_on_change(proto::FRAME_SPEED, speed_raw_, last_speed_raw_);
+  send_setpoints_on_change(proto::FRAME_TORQUE, torque_raw_, last_torque_raw_);
   return return_type::OK;
+}
+
+bool RealHandSystem::send_setpoints_on_change(
+  std::uint8_t frame_type, const std::vector<std::uint8_t> & values,
+  std::vector<std::uint8_t> & last_sent)
+{
+  if (values == last_sent) {return true;}
+  std::uint8_t payload[proto::MAX_PAYLOAD];
+  const std::size_t len =
+    proto::encode_joint_frame(frame_type, values.data(), values.size(), payload);
+  if (len > 0 && can_send(payload, len)) {
+    last_sent = values;
+    return true;
+  }
+  RCLCPP_WARN_THROTTLE(
+    get_logger(), *get_clock(), 1000, "Setpoint frame 0x%02x not sent on %s.", frame_type,
+    can_interface_.c_str());
+  return false;
 }
 
 // ------------------------------------------------------------------ helpers
@@ -319,6 +383,8 @@ bool RealHandSystem::resolve_handles()
   position_state_.assign(n, nullptr);
   velocity_state_.assign(n, nullptr);
   position_command_.assign(n, nullptr);
+  speed_command_.assign(n, nullptr);
+  torque_command_.assign(n, nullptr);
   for (std::size_t i = 0; i < n; ++i) {
     const std::string & jn = info_.joints[i].name;
     const std::string pos = jn + "/" + hardware_interface::HW_IF_POSITION;
@@ -329,7 +395,13 @@ bool RealHandSystem::resolve_handles()
     }
     position_state_[i] = get_state_interface_handle(pos);
     if (has_state(vel)) {velocity_state_[i] = get_state_interface_handle(vel);}
-    if (joint_slots_[i].actuated) {position_command_[i] = get_command_interface_handle(pos);}
+    if (joint_slots_[i].actuated) {
+      position_command_[i] = get_command_interface_handle(pos);
+      const std::string spd = jn + "/" + SPEED_INTERFACE;
+      const std::string trq = jn + "/" + TORQUE_INTERFACE;
+      if (has_command(spd)) {speed_command_[i] = get_command_interface_handle(spd);}
+      if (has_command(trq)) {torque_command_[i] = get_command_interface_handle(trq);}
+    }
   }
 
   // Tactile sensors are optional in the XML. A finger without a sensor is

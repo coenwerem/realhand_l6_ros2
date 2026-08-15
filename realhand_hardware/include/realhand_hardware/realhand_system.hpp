@@ -56,10 +56,14 @@ namespace realhand_hardware
 //                                JSON on this topic from the receiver thread
 //
 // Exported interfaces come from the ros2_control XML. Each actuated joint
-// takes a position command and reports position. Mimic joints report
-// position only. A velocity state interface is filled with zero when
-// declared. Each tactile finger reports the summed pad force through a
-// sensor named tactile_<finger> with a force state interface.
+// takes a position command and reports position. An actuated joint may also
+// declare speed and torque command interfaces, raw 0 to 255 setpoints the
+// hand applies to that joint, sent as a frame whenever any value changes and
+// seeded from activation_speed and activation_torque so a controller reads a
+// defined value. Mimic joints report position only. A velocity state
+// interface is filled with zero when declared. Each tactile finger reports
+// the summed pad force through a sensor named tactile_<finger> with a force
+// state interface.
 class RealHandSystem : public hardware_interface::SystemInterface
 {
 public:
@@ -97,6 +101,11 @@ private:
   bool resolve_handles();
   bool read_initial_position();
   void safe_init_sequence();
+  // Send one setpoint frame (speed or torque) when the values differ from
+  // the last frame sent. Returns true when a frame went out or none was due.
+  bool send_setpoints_on_change(
+    std::uint8_t frame_type, const std::vector<std::uint8_t> & values,
+    std::vector<std::uint8_t> & last_sent);
 
   const HandModel * model_{nullptr};
   std::string can_interface_{"can0"};
@@ -130,6 +139,8 @@ private:
   std::vector<hardware_interface::StateInterface::SharedPtr> position_state_;
   std::vector<hardware_interface::StateInterface::SharedPtr> velocity_state_;
   std::vector<hardware_interface::CommandInterface::SharedPtr> position_command_;
+  std::vector<hardware_interface::CommandInterface::SharedPtr> speed_command_;
+  std::vector<hardware_interface::CommandInterface::SharedPtr> torque_command_;
   std::vector<hardware_interface::StateInterface::SharedPtr> force_state_;
 
   // Scratch buffers sized once so read() and write() do not allocate.
@@ -137,6 +148,10 @@ private:
   std::vector<std::uint8_t> matrix_snapshot_;
   std::vector<std::uint8_t> command_raw_;
   std::vector<std::uint8_t> last_command_raw_;
+  std::vector<std::uint8_t> speed_raw_;
+  std::vector<std::uint8_t> last_speed_raw_;
+  std::vector<std::uint8_t> torque_raw_;
+  std::vector<std::uint8_t> last_torque_raw_;
   std::uint32_t position_request_counter_{0};
 
   rclcpp::Node::SharedPtr taxel_node_;

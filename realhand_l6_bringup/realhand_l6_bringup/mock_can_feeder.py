@@ -25,12 +25,15 @@ Bring up the bus first with scripts/setup_vcan.sh, then
 """
 
 import argparse
+import json
 import threading
 import time
 
 import can
 
 FRAME_POSITION = 0x01
+FRAME_TORQUE = 0x02
+FRAME_SPEED = 0x05
 FRAME_MATRIX_BASE = 0xB1
 NUM_JOINTS = 6
 NUM_FINGERS = 5
@@ -41,8 +44,11 @@ OPEN_RAW = 255
 
 class Emulator:
 
-    def __init__(self, bus, can_id, contact_fingers, delay, ramp):
+    def __init__(self, bus, can_id, contact_fingers, delay, ramp, record=None):
         self.bus = bus
+        # Optional JSON lines file of every speed and torque frame received,
+        # so a test can confirm setpoints reached the bus.
+        self.record = open(record, 'a', buffering=1) if record else None
         self.can_id = can_id
         self.contact_fingers = contact_fingers
         self.delay = delay
@@ -74,6 +80,12 @@ class Emulator:
                 elif len(msg.data) == 1:
                     with self.lock:
                         self.send(bytes([FRAME_POSITION] + self.position))
+            elif kind in (FRAME_SPEED, FRAME_TORQUE) and len(msg.data) == 1 + NUM_JOINTS:
+                if self.record:
+                    self.record.write(json.dumps({
+                        't': time.time(),
+                        'frame': 'speed' if kind == FRAME_SPEED else 'torque',
+                        'values': list(msg.data[1:1 + NUM_JOINTS])}) + '\n')
             elif (FRAME_MATRIX_BASE <= kind < FRAME_MATRIX_BASE + NUM_FINGERS
                     and len(msg.data) == 2):
                 finger = kind - FRAME_MATRIX_BASE
@@ -92,11 +104,13 @@ def main():
                         help='comma list of finger indices that make contact, 0 is the thumb')
     parser.add_argument('--contact-delay', type=float, default=3.0)
     parser.add_argument('--ramp', type=float, default=2.0)
+    parser.add_argument('--record', default=None,
+                        help='JSON lines file of received speed and torque frames')
     args, _ = parser.parse_known_args()
 
     fingers = {int(x) for x in args.fingers.split(',') if x.strip()}
     bus = can.interface.Bus(channel=args.interface, interface='socketcan')
-    emu = Emulator(bus, args.can_id, fingers, args.contact_delay, args.ramp)
+    emu = Emulator(bus, args.can_id, fingers, args.contact_delay, args.ramp, args.record)
     print(f'emulating L6 on {args.interface} id 0x{args.can_id:02x}, '
           f'contact on fingers {sorted(fingers)} after {args.contact_delay:.1f}s')
     try:

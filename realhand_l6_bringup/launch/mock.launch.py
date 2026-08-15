@@ -53,6 +53,11 @@ def generate_launch_description():
                               description='run mock_force_ramp, false leaves the pads to a test'),
         *stack.control_nodes(description, controllers=(
             'joint_state_broadcaster', 'tactile_mock_controller', 'contact_gated_controller')),
+        # Loaded inactive so a controller switch can hand the position
+        # interfaces to a trajectory client, the path a planner takes.
+        Node(package='controller_manager', executable='spawner',
+             arguments=['hand_trajectory_controller', '-c', '/controller_manager', '--inactive'],
+             output='screen'),
         ramp,
         stack.auto_close(),
         *stack.viz_nodes(),
