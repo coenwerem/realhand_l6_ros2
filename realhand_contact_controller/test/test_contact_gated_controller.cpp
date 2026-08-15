@@ -185,10 +185,14 @@ TEST_F(ContactGatedControllerTest, IdleHoldsPositionAndReportsNoContact)
 {
   start_controller();
   update(20);
-  for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_DOUBLE_EQ(command(j), 0.0);}
+  for (std::size_t j = 0; j < JOINTS.size(); ++j) {
+    EXPECT_DOUBLE_EQ(command(j), 0.0);
+                                                                                     }
   const auto codes = latest_contact();
   ASSERT_EQ(codes.size(), FINGERS.size());
-  for (int c : codes) {EXPECT_EQ(c, ContactGatedController::CONTACT_NONE);}
+  for (int c : codes) {
+    EXPECT_EQ(c, ContactGatedController::CONTACT_NONE);
+                                                                          }
 }
 
 TEST_F(ContactGatedControllerTest, CloseStopsOnContactAndReportsGrip)
@@ -197,7 +201,9 @@ TEST_F(ContactGatedControllerTest, CloseStopsOnContactAndReportsGrip)
   request_close(1.0);
   update(10);
   // Every joint has advanced 10 steps toward the target.
-  for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_NEAR(command(j), 10 * STEP, 1e-9);}
+  for (std::size_t j = 0; j < JOINTS.size(); ++j) {
+    EXPECT_NEAR(command(j), 10 * STEP, 1e-9);
+                                                                                            }
 
   // Index finger touches something.
   set_force(1, THRESHOLD);
@@ -219,10 +225,14 @@ TEST_F(ContactGatedControllerTest, ReachingTargetWithoutContactReportsMiss)
   start_controller();
   request_close(0.05);
   update(20);
-  for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_NEAR(command(j), 0.05, 1e-9);}
+  for (std::size_t j = 0; j < JOINTS.size(); ++j) {
+    EXPECT_NEAR(command(j), 0.05, 1e-9);
+                                                                                       }
   const auto codes = latest_contact();
   ASSERT_EQ(codes.size(), FINGERS.size());
-  for (int c : codes) {EXPECT_EQ(c, ContactGatedController::CONTACT_MISSED);}
+  for (int c : codes) {
+    EXPECT_EQ(c, ContactGatedController::CONTACT_MISSED);
+                                                                            }
 }
 
 TEST_F(ContactGatedControllerTest, ContactSensedBeforeCloseIsReportedAsSensing)
@@ -233,7 +243,9 @@ TEST_F(ContactGatedControllerTest, ContactSensedBeforeCloseIsReportedAsSensing)
   ASSERT_EQ(codes.size(), FINGERS.size());
   EXPECT_EQ(codes[3], ContactGatedController::CONTACT_SENSING);
   // No close request, so nothing moved.
-  for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_DOUBLE_EQ(command(j), 0.0);}
+  for (std::size_t j = 0; j < JOINTS.size(); ++j) {
+    EXPECT_DOUBLE_EQ(command(j), 0.0);
+                                                                                     }
 }
 
 TEST_F(ContactGatedControllerTest, OpenIsNotGatedByContact)
@@ -243,15 +255,21 @@ TEST_F(ContactGatedControllerTest, OpenIsNotGatedByContact)
   update(50);
   EXPECT_NEAR(command(2), 0.5, 1e-9);
   // Pads still pressed while opening must not stop the motion.
-  for (std::size_t f = 0; f < FINGERS.size(); ++f) {set_force(f, THRESHOLD * 2);}
+  for (std::size_t f = 0; f < FINGERS.size(); ++f) {
+    set_force(f, THRESHOLD * 2);
+                                                                                }
   request_open();
   update(60);
-  for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_NEAR(command(j), 0.0, 1e-9);}
+  for (std::size_t j = 0; j < JOINTS.size(); ++j) {
+    EXPECT_NEAR(command(j), 0.0, 1e-9);
+                                                                                      }
   // After an ungated open the codes report plain contact, never latched or
   // missed.
   const auto codes = latest_contact();
   ASSERT_EQ(codes.size(), FINGERS.size());
-  for (int c : codes) {EXPECT_EQ(c, ContactGatedController::CONTACT_SENSING);}
+  for (int c : codes) {
+    EXPECT_EQ(c, ContactGatedController::CONTACT_SENSING);
+                                                                             }
 }
 
 TEST_F(ContactGatedControllerTest, ThumbOppositionFinishesBeforeHold)

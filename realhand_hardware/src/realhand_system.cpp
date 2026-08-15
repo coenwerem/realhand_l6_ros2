@@ -65,7 +65,9 @@ CallbackReturn RealHandSystem::on_init(
   model_ = find_hand_model(model_name);
   if (model_ == nullptr) {
     std::string known;
-    for (const auto & n : hand_model_names()) {known += n + " ";}
+    for (const auto & n : hand_model_names()) {
+      known += n + " ";
+    }
     RCLCPP_FATAL(
       get_logger(), "Unknown hand model '%s'. Known models are %s", model_name.c_str(),
       known.c_str());
@@ -195,7 +197,8 @@ CallbackReturn RealHandSystem::on_activate(const rclcpp_lifecycle::State &)
     } else {
       const auto & m = model_->mimic[slot.index];
       rad = m.multiplier *
-        proto::raw_to_rad(model_->actuated[m.parent_index].max_rad, position_snapshot_[m.parent_index]);
+        proto::raw_to_rad(model_->actuated[m.parent_index].max_rad,
+          position_snapshot_[m.parent_index]);
     }
     std::ignore = set_state(position_state_[i], rad, false);
     if (velocity_state_[i]) {std::ignore = set_state(velocity_state_[i], 0.0, false);}
@@ -242,7 +245,8 @@ return_type RealHandSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     } else {
       const auto & m = model_->mimic[slot.index];
       rad = m.multiplier *
-        proto::raw_to_rad(model_->actuated[m.parent_index].max_rad, position_snapshot_[m.parent_index]);
+        proto::raw_to_rad(model_->actuated[m.parent_index].max_rad,
+          position_snapshot_[m.parent_index]);
     }
     std::ignore = set_state(position_state_[i], rad, false);
     if (velocity_state_[i]) {std::ignore = set_state(velocity_state_[i], 0.0, false);}
@@ -254,9 +258,11 @@ return_type RealHandSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   const std::size_t per_finger = model_->taxels_per_finger();
   for (std::size_t f = 0; f < force_state_.size(); ++f) {
     if (!force_state_[f]) {continue;}
-    long sum = 0;
+    std::int64_t sum = 0;
     const std::uint8_t * pad = matrix_snapshot_.data() + f * per_finger;
-    for (std::size_t t = 0; t < per_finger; ++t) {sum += pad[t];}
+    for (std::size_t t = 0; t < per_finger; ++t) {
+      sum += pad[t];
+    }
     std::ignore = set_state(force_state_[f], static_cast<double>(sum), false);
   }
   return return_type::OK;

@@ -38,7 +38,9 @@ std::size_t encode_joint_frame(
 {
   if (n_joints + 1 > MAX_PAYLOAD) {return 0;}
   payload[0] = frame_type;
-  for (std::size_t i = 0; i < n_joints; ++i) {payload[1 + i] = values[i];}
+  for (std::size_t i = 0; i < n_joints; ++i) {
+    payload[1 + i] = values[i];
+  }
   return n_joints + 1;
 }
 
@@ -55,7 +57,9 @@ bool decode_position_frame(
   std::uint8_t * out)
 {
   if (length != n_joints + 1 || payload[0] != FRAME_POSITION) {return false;}
-  for (std::size_t i = 0; i < n_joints; ++i) {out[i] = payload[1 + i];}
+  for (std::size_t i = 0; i < n_joints; ++i) {
+    out[i] = payload[1 + i];
+  }
   return true;
 }
 

@@ -118,10 +118,8 @@ CallbackReturn ContactGatedController::on_configure(const rclcpp_lifecycle::Stat
     "~/contact_state", rclcpp::SystemDefaultsQoS());
   force_pub_ = node->create_publisher<std_msgs::msg::Float64MultiArray>(
     "~/finger_force", rclcpp::SystemDefaultsQoS());
-  rt_contact_pub_ =
-    std::make_unique<realtime_tools::RealtimePublisher<std_msgs::msg::Int32MultiArray>>(contact_pub_);
-  rt_force_pub_ =
-    std::make_unique<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>>(force_pub_);
+  rt_contact_pub_ = std::make_unique<ContactPublisher>(contact_pub_);
+  rt_force_pub_ = std::make_unique<ForcePublisher>(force_pub_);
   // Size the message buffers once so update() assigns in place.
   rt_contact_pub_->msg_.data.assign(n_fingers_, 0);
   rt_force_pub_->msg_.data.assign(n_fingers_, 0.0);
@@ -332,7 +330,9 @@ void ContactGatedController::publish_diagnostics(const std::vector<bool> & conta
   }
   if (rt_force_pub_ && rt_force_pub_->trylock()) {
     auto & data = rt_force_pub_->msg_.data;
-    for (std::size_t f = 0; f < n_fingers_; ++f) {data[f] = finger_force_[f];}
+    for (std::size_t f = 0; f < n_fingers_; ++f) {
+      data[f] = finger_force_[f];
+    }
     rt_force_pub_->unlockAndPublish();
   }
 }

@@ -107,8 +107,10 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr open_sub_;
   rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr contact_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr force_pub_;
-  std::unique_ptr<realtime_tools::RealtimePublisher<std_msgs::msg::Int32MultiArray>> rt_contact_pub_;
-  std::unique_ptr<realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>> rt_force_pub_;
+  using ContactPublisher = realtime_tools::RealtimePublisher<std_msgs::msg::Int32MultiArray>;
+  using ForcePublisher = realtime_tools::RealtimePublisher<std_msgs::msg::Float64MultiArray>;
+  std::unique_ptr<ContactPublisher> rt_contact_pub_;
+  std::unique_ptr<ForcePublisher> rt_force_pub_;
 };
 
 }  // namespace realhand_contact_controller

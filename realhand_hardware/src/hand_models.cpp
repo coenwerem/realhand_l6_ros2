@@ -93,7 +93,9 @@ const HandModel * find_hand_model(const std::string & name)
 std::vector<std::string> hand_model_names()
 {
   std::vector<std::string> out;
-  for (const HandModel * m : MODELS) {out.push_back(m->name);}
+  for (const HandModel * m : MODELS) {
+    out.push_back(m->name);
+  }
   return out;
 }
 

@@ -53,6 +53,8 @@ install(TARGETS realhand_protocol ${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_protocol test/test_protocol.cpp)
   target_link_libraries(test_protocol realhand_protocol)

@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Process the hand xacro for every side and hardware option and check the tree.
+"""Process the hand xacro for every side and hardware option and check the tree."""
 
-The joint and sensor names the driver expects come from realhand_hardware's
-model table, so a rename on one side without the other fails here.
-"""
+# The joint and sensor names the driver expects come from realhand_hardware's
+# model table, so a rename on one side without the other fails here.
 
 import os
 import subprocess
