@@ -13,6 +13,8 @@ jobs:
       - uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: jazzy
+      - name: ros base with an rmw and typesupport implementation
+        run: sudo apt-get install -y ros-jazzy-ros-base ros-jazzy-rmw-fastrtps-cpp
       - name: virtual CAN for the driver test
         run: |
           sudo modprobe vcan || echo "vcan module unavailable, the vcan test will skip"
