@@ -21,7 +21,6 @@ import os
 import subprocess
 import xml.etree.ElementTree as ET
 
-from ament_index_python.packages import get_package_share_directory
 import pytest
 
 ACTUATED = [
@@ -32,8 +31,9 @@ FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky']
 
 
 def render(**args):
-    share = get_package_share_directory('realhand_l6_description')
-    path = os.path.join(share, 'urdf', 'realhand_l6.urdf.xacro')
+    # The source tree, so the test does not need its own package on the
+    # ament index.
+    path = os.path.join(os.path.dirname(__file__), '..', 'urdf', 'realhand_l6.urdf.xacro')
     cmd = ['xacro', path] + [f'{k}:={v}' for k, v in args.items()]
     return subprocess.run(cmd, check=True, capture_output=True, text=True).stdout
 

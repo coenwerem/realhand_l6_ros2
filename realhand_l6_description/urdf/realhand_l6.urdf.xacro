@@ -21,8 +21,8 @@
   <xacro:arg name="enable_tactile" default="true"/>
   <xacro:arg name="taxel_topic" default=""/>
 
-  <xacro:include filename="$(find realhand_l6_description)/urdf/realhand_l6_macro.xacro"/>
-  <xacro:include filename="$(find realhand_l6_description)/urdf/realhand_l6.ros2_control.xacro"/>
+  <xacro:include filename="realhand_l6_macro.xacro"/>
+  <xacro:include filename="realhand_l6.ros2_control.xacro"/>
 
   <link name="world"/>
 
