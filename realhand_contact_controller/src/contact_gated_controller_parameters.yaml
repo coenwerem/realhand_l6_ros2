@@ -1,0 +1,61 @@
+contact_gated_controller:
+  command_joints:
+    type: string_array
+    default_value:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    description: "Joints whose position command interfaces the controller claims."
+    validation:
+      unique<>: null
+      not_empty<>: null
+  finger_names:
+    type: string_array
+    default_value: [thumb, index, middle, ring, pinky]
+    description: "Fingers with a tactile pad, in the same order as flexion_joints. The state interface for finger f is <sensor_prefix><finger_names[f]>/force."
+    validation:
+      unique<>: null
+      not_empty<>: null
+  flexion_joints:
+    type: string_array
+    default_value:
+      - thumb_cmc_pitch
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    description: "One flexion joint per finger, gated by that finger's contact. Every entry must also appear in command_joints."
+    validation:
+      unique<>: null
+      not_empty<>: null
+  thumb_opposition_joint:
+    type: string
+    default_value: thumb_cmc_yaw
+    description: "Command joint driven to target without contact gating. Empty disables."
+  sensor_prefix:
+    type: string
+    default_value: tactile_
+    description: "Prefix of the tactile sensor names exported by the hardware."
+  contact_threshold:
+    type: double
+    default_value: 300.0
+    description: "Summed pad force at or above which a finger counts as in contact."
+    validation:
+      gt_eq<>: 0.0
+  close_step:
+    type: double
+    default_value: 0.01
+    description: "Radians each commanded joint moves toward its target per update."
+    validation:
+      gt<>: 0.0
+  open_position:
+    type: double
+    default_value: 0.0
+    description: "Position every command joint moves to on an open request."
+  monitor_only:
+    type: bool
+    default_value: false
+    description: "Claim no command interfaces, publish contact and force only."

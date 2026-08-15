@@ -1,0 +1,9 @@
+<library path="realhand_contact_controller">
+  <class name="realhand_contact_controller/ContactGatedController"
+         type="realhand_contact_controller::ContactGatedController"
+         base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Closes each finger toward a target and freezes it on tactile contact.
+    </description>
+  </class>
+</library>
