@@ -282,7 +282,7 @@ TEST_F(ContactGatedControllerTest, ThumbOppositionFinishesBeforeHold)
   close_pub_->publish(msg);
   spin_for(50);
   update(10);
-  // Flexion joints latched at 0.02 after two steps, opposition keeps going.
+  // Flexion joints latched at 0.02 after two steps, opposition continues.
   EXPECT_NEAR(command(0), 0.02, 1e-9);
   EXPECT_NEAR(command(1), 10 * STEP, 1e-9);
   update(45);

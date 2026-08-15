@@ -252,7 +252,7 @@ return_type RealHandSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
     if (velocity_state_[i]) {std::ignore = set_state(velocity_state_[i], 0.0, false);}
   }
 
-  // One summed force per pad. Five scalars keep the consuming controller's
+  // One summed force per pad. Five scalars hold the reading controller's
   // per cycle interface reads cheap where 360 taxel interfaces overran the
   // control loop.
   const std::size_t per_finger = model_->taxels_per_finger();

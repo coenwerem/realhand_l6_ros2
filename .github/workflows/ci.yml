@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  jazzy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+      - name: virtual CAN for the driver test
+        run: |
+          sudo modprobe vcan || echo "vcan module unavailable, the vcan test will skip"
+          sudo ip link add dev vcan0 type vcan 2>/dev/null || true
+          sudo ip link set up vcan0 2>/dev/null || true
+          ip -br link show vcan0 || true
+      - uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          target-ros2-distro: jazzy
+          package-name: |
+            realhand_hardware
+            realhand_contact_controller
+            realhand_l6_description
+            realhand_l6_bringup
+          skip-tests: false
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: colcon-logs
+          path: ros_ws/log
