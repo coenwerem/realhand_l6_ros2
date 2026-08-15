@@ -319,9 +319,9 @@ void ContactGatedController::publish_diagnostics(const std::vector<bool> & conta
     auto & data = rt_contact_pub_->msg_.data;
     for (std::size_t f = 0; f < n_fingers_; ++f) {
       int code;
-      if (params_.monitor_only) {
-        code = contact[f] ? CONTACT_SENSING : CONTACT_NONE;
-      } else if (latched_[f]) {
+      // Latched and missed only mean something for a gated close. An open
+      // motion that reaches its target reports plain contact state.
+      if (!params_.monitor_only && gated_close_ && latched_[f]) {
         code = contacted_[f] ? CONTACT_LATCHED : CONTACT_MISSED;
       } else {
         code = contact[f] ? CONTACT_SENSING : CONTACT_NONE;

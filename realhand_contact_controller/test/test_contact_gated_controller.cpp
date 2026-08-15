@@ -247,6 +247,11 @@ TEST_F(ContactGatedControllerTest, OpenIsNotGatedByContact)
   request_open();
   update(60);
   for (std::size_t j = 0; j < JOINTS.size(); ++j) {EXPECT_NEAR(command(j), 0.0, 1e-9);}
+  // After an ungated open the codes report plain contact, never latched or
+  // missed.
+  const auto codes = latest_contact();
+  ASSERT_EQ(codes.size(), FINGERS.size());
+  for (int c : codes) {EXPECT_EQ(c, ContactGatedController::CONTACT_SENSING);}
 }
 
 TEST_F(ContactGatedControllerTest, ThumbOppositionFinishesBeforeHold)

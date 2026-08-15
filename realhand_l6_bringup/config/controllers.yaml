@@ -1,0 +1,85 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 125
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    contact_gated_controller:
+      type: realhand_contact_controller/ContactGatedController
+
+    # Read only variant for live validation. Claims no command interfaces.
+    tactile_monitor:
+      type: realhand_contact_controller/ContactGatedController
+
+    # Mock only. Writes the fake sensor command interfaces that
+    # mock_components/GenericSystem creates with mock_sensor_commands, so a
+    # test or the ramp node can set each pad force.
+    tactile_mock_controller:
+      type: forward_command_controller/ForwardCommandController
+
+joint_state_broadcaster:
+  ros__parameters:
+    # Joints only. Without this list the broadcaster also publishes the
+    # tactile force interfaces as joints.
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+      - thumb_ip
+      - index_dip
+      - middle_dip
+      - ring_dip
+      - pinky_dip
+    interfaces:
+      - position
+
+contact_gated_controller:
+  ros__parameters:
+    command_joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    finger_names: [thumb, index, middle, ring, pinky]
+    flexion_joints:
+      - thumb_cmc_pitch
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    thumb_opposition_joint: thumb_cmc_yaw
+    sensor_prefix: tactile_
+    # Summed taxel force, 72 taxels at 0 to 255 each, so full pad contact
+    # sums near 18360. 300 latches early in a press.
+    contact_threshold: 300.0
+    close_step: 0.02
+    open_position: 0.0
+
+tactile_monitor:
+  ros__parameters:
+    finger_names: [thumb, index, middle, ring, pinky]
+    flexion_joints:
+      - thumb_cmc_pitch
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    sensor_prefix: tactile_
+    contact_threshold: 300.0
+    monitor_only: true
+
+tactile_mock_controller:
+  ros__parameters:
+    joints:
+      - tactile_thumb
+      - tactile_index
+      - tactile_middle
+      - tactile_ring
+      - tactile_pinky
+    interface_name: force
