@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- Standalone RealHand L6 SRDF, hand base fixed to world. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="realhand_l6">
+  <xacro:arg name="prefix" default=""/>
+  <xacro:include filename="realhand_l6_macro.srdf.xacro"/>
+  <virtual_joint name="world_joint" type="fixed" parent_frame="world" child_link="$(arg prefix)hand_base_link"/>
+  <xacro:realhand_l6_srdf prefix="$(arg prefix)"/>
+</robot>

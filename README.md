@@ -29,6 +29,7 @@ Each package has its own README with the full tables.
 | `realhand_contact_controller` | `controller_interface::ControllerInterface` plugin `realhand_contact_controller/ContactGatedController`. Closes each finger toward a target and freezes the finger the moment its pad crosses a force threshold, reports gripped versus closed on air, ungated open, monitor only mode. Real time safe publishing, parameters through `generate_parameter_library`. |
 | `realhand_l6_description` | Xacro macro for the L6, right and left, meshes, `<finger>_pad` frames on each distal link, tool center point, and a `ros2_control` macro switching between `mock_components/GenericSystem` and the real driver. |
 | `realhand_l6_bringup` | Launch files for mock, virtual CAN, and hardware, controller configuration, RViz contact markers, an emulated hand for `vcan0`, a pad force ramp for the mock, and a read only CAN probe. |
+| `realhand_l6_moveit_config` | SRDF xacro macro for arm and hand configurations (finger chains, `hand` group, `open`, `pinch`, `power` states, hand collision pairs), plus a standalone MoveIt demo on mock or real hardware. |
 
 ## Quickstart with no hardware
 
@@ -98,9 +99,24 @@ ros2 topic pub --once /hand_torque_controller/commands std_msgs/msg/Float64Multi
 
 In addition, for a check independent of ROS, `ros2 run realhand_l6_bringup can_tactile_probe --interface can0` sends only matrix read requests and prints per finger sums and row rates. Run the probe with nothing else on the bus so the rate you read is the hand's own.
 
+## MoveIt
+
+`realhand_l6_moveit_config` ships the hand SRDF as a xacro macro, `realhand_l6_srdf`, with one serial chain group per finger, a `hand` group, a `hand_actuated` group, the `open`, `pinch`, and `power` states, and the hand collision pairs, so an arm and hand configuration includes one file and calls the macro with its prefix and arm group. The standalone demo plans and executes in the hand group through `hand_trajectory_controller`.
+
+```bash
+ros2 launch realhand_l6_moveit_config demo.launch.py
+ros2 launch realhand_l6_moveit_config demo.launch.py hardware:=real can_interface:=can0
+```
+
+<p align="center">
+  <img src="docs/moveit_hand_states.gif" alt="move_group planning and executing power, pinch, and open on the mock hand" width="360"/>
+</p>
+
+Specifically, the clip above shows `move_group` on the mock stack executing three joint space goals in a row, power, pinch, and open, with the planned path ghost visible before each motion.
+
 ## Interfaces and parameters
 
-Each package README holds its own tables. [realhand_hardware](realhand_hardware/README.md) lists the exported interfaces and every driver parameter, [realhand_contact_controller](realhand_contact_controller/README.md) the topics, contact codes, and controller parameters, [realhand_l6_description](realhand_l6_description/README.md) the macro arguments, and [realhand_l6_bringup](realhand_l6_bringup/README.md) the launch arguments, controllers, and entry points.
+Each package README holds its own tables. [realhand_hardware](realhand_hardware/README.md) lists the exported interfaces and every driver parameter, [realhand_contact_controller](realhand_contact_controller/README.md) the topics, contact codes, and controller parameters, [realhand_l6_description](realhand_l6_description/README.md) the macro arguments, and [realhand_l6_bringup](realhand_l6_bringup/README.md) the launch arguments, controllers, and entry points, and [realhand_l6_moveit_config](realhand_l6_moveit_config/README.md) the SRDF macro and MoveIt configuration.
 
 ## Which RealHand models
 
@@ -110,7 +126,7 @@ In particular, the left L6 geometry is the mirror of the validated right hand an
 
 ## Tests
 
-`colcon test` runs gtest on the CAN codec and model table, gtest on the controller state machine with loaned interfaces the test owns (latch on contact, closed on air, ungated open, thumb opposition ordering, monitor only), a pytest over the xacro for both sides and both hardware plugins, a `launch_testing` run of the whole mock stack including a `FollowJointTrajectory` goal through the trajectory controller, and a `launch_testing` run of the real driver on `vcan0` that also checks speed setpoints reach the bus, skipped when the interface is absent. CI runs the same suite on Jazzy for every push.
+`colcon test` runs gtest on the CAN codec and model table, gtest on the controller state machine with loaned interfaces the test owns (latch on contact, closed on air, ungated open, thumb opposition ordering, monitor only), a pytest over the xacro for both sides and both hardware plugins, a `launch_testing` run of the whole mock stack including a `FollowJointTrajectory` goal through the trajectory controller, a `launch_testing` run of the real driver on `vcan0` that also checks speed setpoints reach the bus, skipped when the interface is absent, and a `launch_testing` run of `move_group` on mock hardware planning and executing to the pinch state. CI runs the same suite on Jazzy for every push.
 
 ## Citing
 

@@ -30,6 +30,7 @@ jobs:
             realhand_contact_controller
             realhand_l6_description
             realhand_l6_bringup
+            realhand_l6_moveit_config
           skip-tests: true
       - name: test with the workspace sourced
         shell: bash
@@ -38,7 +39,7 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
           colcon test --event-handlers console_direct+ \
-            --packages-select realhand_hardware realhand_contact_controller realhand_l6_description realhand_l6_bringup
+            --packages-select realhand_hardware realhand_contact_controller realhand_l6_description realhand_l6_bringup realhand_l6_moveit_config
           colcon test-result --verbose
       - uses: actions/upload-artifact@v4
         if: always()

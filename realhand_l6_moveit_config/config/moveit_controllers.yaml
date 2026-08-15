@@ -1,0 +1,19 @@
+# MoveIt executes hand trajectories through the joint_trajectory_controller
+# defined in realhand_l6_bringup/config/controllers.yaml.
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+moveit_simple_controller_manager:
+  controller_names:
+    - hand_trajectory_controller
+
+  hand_trajectory_controller:
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
+    default: true
+    joints:
+      - thumb_cmc_pitch
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch

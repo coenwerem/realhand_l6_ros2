@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<!--
+  SRDF macro for the RealHand L6. Include from an arm and hand SRDF and call
+  realhand_l6_srdf with the same prefix the URDF macro used. Groups are one
+  serial chain per finger, a hand group composed of the five, and
+  hand_actuated with the six driven joints for servo control. Group
+  states open, pinch, and power give the mimic joints their coupled values.
+  parent_group names the arm group the end effector attaches to. When empty,
+  the standalone case, no end effector element is emitted. Collision pairs are the adjacent and never colliding
+  hand link pairs found by the MoveIt Setup Assistant on the L6.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="realhand_l6_srdf" params="prefix:='' parent_group:=''">
+
+    <group name="${prefix}thumb">
+      <chain base_link="${prefix}hand_base_link" tip_link="${prefix}thumb_distal"/>
+    </group>
+    <group name="${prefix}index">
+      <chain base_link="${prefix}hand_base_link" tip_link="${prefix}index_distal"/>
+    </group>
+    <group name="${prefix}middle">
+      <chain base_link="${prefix}hand_base_link" tip_link="${prefix}middle_distal"/>
+    </group>
+    <group name="${prefix}ring">
+      <chain base_link="${prefix}hand_base_link" tip_link="${prefix}ring_distal"/>
+    </group>
+    <group name="${prefix}pinky">
+      <chain base_link="${prefix}hand_base_link" tip_link="${prefix}pinky_distal"/>
+    </group>
+
+    <group name="${prefix}hand">
+      <group name="${prefix}thumb"/>
+      <group name="${prefix}index"/>
+      <group name="${prefix}middle"/>
+      <group name="${prefix}ring"/>
+      <group name="${prefix}pinky"/>
+    </group>
+
+    <group name="${prefix}hand_actuated">
+      <joint name="${prefix}thumb_cmc_pitch"/>
+      <joint name="${prefix}thumb_cmc_yaw"/>
+      <joint name="${prefix}index_mcp_pitch"/>
+      <joint name="${prefix}middle_mcp_pitch"/>
+      <joint name="${prefix}ring_mcp_pitch"/>
+      <joint name="${prefix}pinky_mcp_pitch"/>
+    </group>
+
+    <group_state name="open" group="${prefix}hand">
+      <joint name="${prefix}thumb_cmc_yaw" value="0.0"/>
+      <joint name="${prefix}thumb_cmc_pitch" value="0.0"/>
+      <joint name="${prefix}thumb_ip" value="0.0"/>
+      <joint name="${prefix}index_mcp_pitch" value="0.0"/>
+      <joint name="${prefix}index_dip" value="0.0"/>
+      <joint name="${prefix}middle_mcp_pitch" value="0.0"/>
+      <joint name="${prefix}middle_dip" value="0.0"/>
+      <joint name="${prefix}ring_mcp_pitch" value="0.0"/>
+      <joint name="${prefix}ring_dip" value="0.0"/>
+      <joint name="${prefix}pinky_mcp_pitch" value="0.0"/>
+      <joint name="${prefix}pinky_dip" value="0.0"/>
+    </group_state>
+    <group_state name="pinch" group="${prefix}hand">
+      <joint name="${prefix}thumb_cmc_yaw" value="1.248"/>
+      <joint name="${prefix}thumb_cmc_pitch" value="0.314"/>
+      <joint name="${prefix}thumb_ip" value="0.575"/>
+      <joint name="${prefix}index_mcp_pitch" value="0.816"/>
+      <joint name="${prefix}index_dip" value="0.726"/>
+      <joint name="${prefix}middle_mcp_pitch" value="0.816"/>
+      <joint name="${prefix}middle_dip" value="0.726"/>
+      <joint name="${prefix}ring_mcp_pitch" value="0.816"/>
+      <joint name="${prefix}ring_dip" value="0.726"/>
+      <joint name="${prefix}pinky_mcp_pitch" value="0.816"/>
+      <joint name="${prefix}pinky_dip" value="0.726"/>
+    </group_state>
+    <group_state name="power" group="${prefix}hand">
+      <joint name="${prefix}thumb_cmc_yaw" value="1.244"/>
+      <joint name="${prefix}thumb_cmc_pitch" value="0.084"/>
+      <joint name="${prefix}thumb_ip" value="0.154"/>
+      <joint name="${prefix}index_mcp_pitch" value="0.563"/>
+      <joint name="${prefix}index_dip" value="0.501"/>
+      <joint name="${prefix}middle_mcp_pitch" value="0.663"/>
+      <joint name="${prefix}middle_dip" value="0.59"/>
+      <joint name="${prefix}ring_mcp_pitch" value="0.653"/>
+      <joint name="${prefix}ring_dip" value="0.581"/>
+      <joint name="${prefix}pinky_mcp_pitch" value="0.616"/>
+      <joint name="${prefix}pinky_dip" value="0.548"/>
+    </group_state>
+
+    <xacro:unless value="${parent_group == ''}">
+      <end_effector name="${prefix}hand" parent_link="${prefix}hand_base_link" group="${prefix}hand" parent_group="${parent_group}"/>
+    </xacro:unless>
+
+    <passive_joint name="${prefix}thumb_ip"/>
+    <passive_joint name="${prefix}index_dip"/>
+    <passive_joint name="${prefix}middle_dip"/>
+    <passive_joint name="${prefix}ring_dip"/>
+    <passive_joint name="${prefix}pinky_dip"/>
+
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}thumb_metacarpals_base2" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}thumb_metacarpals" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}thumb_distal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}index_proximal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}index_distal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}middle_proximal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}middle_proximal" link2="${prefix}middle_distal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}ring_proximal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}ring_proximal" link2="${prefix}ring_distal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}pinky_proximal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}pinky_proximal" link2="${prefix}pinky_distal" reason="Adjacent"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}thumb_metacarpals" reason="Never"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}thumb_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}index_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}hand_base_link" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}thumb_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}middle_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_proximal" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}ring_proximal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}index_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}index_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}middle_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals_base2" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}index_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}index_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}middle_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_metacarpals" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}index_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}middle_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}thumb_distal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}middle_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}middle_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_proximal" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_distal" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_distal" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}ring_proximal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}ring_distal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}ring_distal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_proximal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}ring_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}ring_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}index_distal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_proximal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_proximal" link2="${prefix}pinky_distal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_distal" link2="${prefix}pinky_proximal" reason="Never"/>
+    <disable_collisions link1="${prefix}middle_distal" link2="${prefix}pinky_distal" reason="Never"/>
+
+  </xacro:macro>
+</robot>
