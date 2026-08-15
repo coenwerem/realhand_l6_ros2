@@ -7,14 +7,17 @@ ros2_control driver, tactile contact controller, and robot description for the R
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 <p align="center">
-  <img src="docs/l6_tactile_contact.gif" alt="RealHand L6 detecting fingertip contact from its taxel pads" width="420"/>
-</p>
-<p align="center">
-  <img src="docs/rviz_contact_detection.gif" alt="Per finger contact markers in RViz while pads are pressed on the real hand" width="300"/>
-  <img src="docs/mock_contact_gated_close.gif" alt="Contact gated close on the mock stack, each finger freezes when its pad reports contact" width="300"/>
+  <img src="docs/l6_tactile_contact.gif" alt="RealHand L6 detecting fingertip contact from its taxel pads" width="360"/>
+  <img src="docs/rviz_contact_detection.gif" alt="Per finger contact markers in RViz during the same hardware test" width="300"/>
 </p>
 
-Specifically, the three clips above show, from the top, fingertip contact detection on the real hand through the driver tactile export. The same signal drawn as pad markers in RViz, yellow on contact. The contact gated close on the mock stack, each finger stops where its pad first reports contact and turns red, with the pads pressed in sequence, thumb to pinky, so the latch order shows.
+Specifically, the pair above comes from one hardware session, fingertip contact detection on the real hand through the driver tactile export on the left, and the same signal drawn as pad markers in RViz on the right, yellow on contact.
+
+<p align="center">
+  <img src="docs/mock_contact_gated_close.gif" alt="Contact gated close on the mock stack, each finger freezes when its pad reports contact" width="360"/>
+</p>
+
+By contrast, the third clip shows the contact gated close on the mock stack, each finger stops where its pad first reports contact and turns red, with the pads pressed in sequence, thumb to pinky, so the latch order shows.
 
 ## Packages
 
@@ -136,6 +139,37 @@ In particular, the left L6 geometry is the mirror of the validated right hand an
 ## Tests
 
 `colcon test` runs gtest on the CAN codec and model table, gtest on the controller state machine with loaned interfaces the test owns (latch on contact, closed on air, ungated open, thumb opposition ordering, monitor only), a pytest over the xacro for both sides and both hardware plugins, a `launch_testing` run of the whole mock stack, and a `launch_testing` run of the real driver on `vcan0`, skipped when the interface is absent. CI runs the same suite on Jazzy for every push.
+
+## Citing
+
+The driver and controller grew out of the hardware experiments in the papers below. If the code helps your work, cite one of them.
+
+```bibtex
+@article{enwerem2026grasp,
+  title={Grasp Execution Without a Planner: Configuration-Space Grasp Distance Fields with Certified Safety \& Guaranteed Quality},
+  author={Enwerem, Clinton and Baras, John S. and Belta, Calin},
+  journal={arXiv preprint arXiv:2608.00600},
+  year={2026}
+}
+
+@article{enwerem2026firmgrasp,
+  title={FIRMGrasp: A Friction-Informed Risk Margin for Robust Grasp Synthesis},
+  author={Enwerem, Clinton and Baras, John S. and Belta, Calin},
+  journal={arXiv preprint arXiv:2607.25049},
+  year={2026}
+}
+
+@inproceedings{enwerem2026variational,
+  title={Variational Neural Belief Parameterizations for Robust Dexterous Grasping under Multimodal Uncertainty},
+  author={Enwerem, Clinton and Kalyanaraman, Shreya and Baras, John S. and Belta, Calin},
+  booktitle={Proceedings of the IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year={2026},
+  eprint={2604.25897},
+  archivePrefix={arXiv},
+  primaryClass={cs.RO},
+  note={To appear}
+}
+```
 
 ## Attribution and license
 
