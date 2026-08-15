@@ -9,18 +9,18 @@ on:
 jobs:
   jazzy:
     runs-on: ubuntu-24.04
+    container:
+      image: ros:jazzy
     steps:
-      - uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: jazzy
-      - name: ros base with an rmw and typesupport implementation
-        run: sudo apt-get install -y ros-jazzy-ros-base ros-jazzy-rmw-fastrtps-cpp
+      - name: container prerequisites
+        run: |
+          apt-get update
+          apt-get install -y sudo git python3-vcstool python3-colcon-common-extensions \
+            python3-rosdep ros-jazzy-rmw-fastrtps-cpp
       - name: virtual CAN for the driver test
         run: |
-          sudo modprobe vcan || echo "vcan module unavailable, the vcan test will skip"
-          sudo ip link add dev vcan0 type vcan 2>/dev/null || true
-          sudo ip link set up vcan0 2>/dev/null || true
-          ip -br link show vcan0 || true
+          (modprobe vcan && ip link add dev vcan0 type vcan && ip link set up vcan0) \
+            || echo "vcan unavailable in the container, the vcan test will skip"
       - uses: ros-tooling/action-ros-ci@v0.4
         with:
           target-ros2-distro: jazzy
