@@ -96,9 +96,32 @@ protected:
     close_pub_ = node->create_publisher<sensor_msgs::msg::JointState>(
       "~/close_to", rclcpp::SystemDefaultsQoS());
     open_pub_ = node->create_publisher<std_msgs::msg::Bool>("~/open", rclcpp::SystemDefaultsQoS());
+    // Echo subscriptions on the request topics. When the echo arrives the
+    // controller's own subscription on the same node has been served by the
+    // same executor, so the request helpers wait on delivery, not on a timer.
+    close_echo_ = node->create_subscription<sensor_msgs::msg::JointState>(
+      "~/close_to", rclcpp::SystemDefaultsQoS(),
+      [this](const sensor_msgs::msg::JointState::SharedPtr) {++requests_seen_;});
+    open_echo_ = node->create_subscription<std_msgs::msg::Bool>(
+      "~/open", rclcpp::SystemDefaultsQoS(),
+      [this](const std_msgs::msg::Bool::SharedPtr) {++requests_seen_;});
     executor_.add_node(node->get_node_base_interface());
     // Discovery between the intra process publisher and subscriber.
     spin_for(200);
+  }
+
+  // Spin until one more request echo arrives, then once more so the
+  // controller's callback for the same message has run too.
+  void wait_for_request_delivery()
+  {
+    const int before = requests_seen_;
+    const auto end = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (requests_seen_ == before && std::chrono::steady_clock::now() < end) {
+      executor_.spin_some();
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    ASSERT_GT(requests_seen_, before) << "request not delivered";
+    executor_.spin_some();
   }
 
   void spin_for(int ms)
@@ -126,7 +149,7 @@ protected:
     msg.name = JOINTS;
     msg.position.assign(JOINTS.size(), target);
     close_pub_->publish(msg);
-    spin_for(50);
+    wait_for_request_delivery();
   }
 
   void request_open()
@@ -134,7 +157,7 @@ protected:
     std_msgs::msg::Bool msg;
     msg.data = true;
     open_pub_->publish(msg);
-    spin_for(50);
+    wait_for_request_delivery();
   }
 
   void set_force(std::size_t finger, double value)
@@ -164,6 +187,9 @@ protected:
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr force_sub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr close_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr open_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr close_echo_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr open_echo_;
+  int requests_seen_{0};
   std::vector<int> last_contact_;
   std::vector<double> last_force_;
 };
@@ -280,7 +306,7 @@ TEST_F(ContactGatedControllerTest, ThumbOppositionFinishesBeforeHold)
   msg.name = JOINTS;
   msg.position = {0.02, 0.5, 0.02, 0.02, 0.02, 0.02};
   close_pub_->publish(msg);
-  spin_for(50);
+  wait_for_request_delivery();
   update(10);
   // Flexion joints latched at 0.02 after two steps, opposition continues.
   EXPECT_NEAR(command(0), 0.02, 1e-9);
