@@ -26,6 +26,7 @@ Bring up the bus first with scripts/setup_vcan.sh, then
 
 import argparse
 import json
+import signal
 import threading
 import time
 
@@ -56,6 +57,7 @@ class Emulator:
         self.position = [OPEN_RAW] * NUM_JOINTS
         self.lock = threading.Lock()
         self.t0 = time.time()
+        self.running = True
 
     def send(self, data):
         self.bus.send(can.Message(arbitration_id=self.can_id, is_extended_id=False, data=data))
@@ -68,7 +70,7 @@ class Emulator:
         # Position command frames update the emulated position, a one byte
         # position request gets the current position back. Matrix requests
         # get twelve rows for that finger.
-        while True:
+        while self.running:
             msg = self.bus.recv(timeout=0.1)
             if msg is None or msg.arbitration_id != self.can_id or len(msg.data) == 0:
                 continue
@@ -113,12 +115,18 @@ def main():
     emu = Emulator(bus, args.can_id, fingers, args.contact_delay, args.ramp, args.record)
     print(f'emulating L6 on {args.interface} id 0x{args.can_id:02x}, '
           f'contact on fingers {sorted(fingers)} after {args.contact_delay:.1f}s')
+
+    def stop(signum, frame):
+        emu.running = False
+
+    signal.signal(signal.SIGINT, stop)
+    signal.signal(signal.SIGTERM, stop)
     try:
         emu.listen()
-    except KeyboardInterrupt:
-        pass
     finally:
         bus.shutdown()
+        if emu.record:
+            emu.record.close()
 
 
 if __name__ == '__main__':
