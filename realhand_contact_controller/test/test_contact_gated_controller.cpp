@@ -89,7 +89,10 @@ protected:
     auto node = controller_->get_node();
     contact_sub_ = node->create_subscription<std_msgs::msg::Int32MultiArray>(
       "~/contact_state", rclcpp::SystemDefaultsQoS(),
-      [this](const std_msgs::msg::Int32MultiArray::SharedPtr msg) {last_contact_ = msg->data;});
+      [this](const std_msgs::msg::Int32MultiArray::SharedPtr msg) {
+        last_contact_ = msg->data;
+        ++contact_msgs_;
+      });
     force_sub_ = node->create_subscription<std_msgs::msg::Float64MultiArray>(
       "~/finger_force", rclcpp::SystemDefaultsQoS(),
       [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {last_force_ = msg->data;});
@@ -167,10 +170,26 @@ protected:
 
   double command(std::size_t joint) {return commands_[joint]->get_optional<double>().value();}
 
-  // Wait until a diagnostic message from the current controller state has
-  // been received, since the realtime publisher hands off to its own thread.
+  // Spin without updating until the diagnostic topic goes quiet. The realtime
+  // publisher hands off to its own thread, so cycles the controller ran
+  // earlier can still have messages in flight. Draining them here stops a
+  // later read from picking up a code the controller published before the
+  // transition the test is about to check.
+  void drain_contact()
+  {
+    int seen;
+    do {
+      seen = contact_msgs_;
+      spin_for(50);
+    } while (contact_msgs_ != seen);
+  }
+
+  // Read the diagnostic code for the controller's current state. Every
+  // message arriving after the drain was produced by one of the updates
+  // below, so the first one already carries the state under test.
   std::vector<int> latest_contact()
   {
+    drain_contact();
     last_contact_.clear();
     for (int i = 0; i < 100 && last_contact_.empty(); ++i) {
       update(1);
@@ -190,6 +209,7 @@ protected:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr close_echo_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr open_echo_;
   int requests_seen_{0};
+  int contact_msgs_{0};
   std::vector<int> last_contact_;
   std::vector<double> last_force_;
 };
