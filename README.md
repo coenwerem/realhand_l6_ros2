@@ -8,7 +8,7 @@ ROS 2 control driver, tactile contact controller, robot description, bringup, an
 
 <p align="center">
   <img src="docs/l6_tactile_contact.gif" alt="RealHand L6 detecting fingertip contact from its taxel pads" width="360"/>
-  <img src="docs/rviz_contact_detection.gif" alt="Per finger contact markers in RViz during the same hardware test" width="300"/>
+  <img src="docs/rviz_contact_detection.gif" alt="Per finger contact markers in RViz during the same hardware test" width="360"/>
 </p>
 
 Both clips above are from the same hardware test. The left clip shows fingertip contact detection from the driver's tactile state interfaces. The right clip renders the same contact state as pad markers in RViz, with yellow indicating contact.
