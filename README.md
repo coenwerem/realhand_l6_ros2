@@ -1,6 +1,6 @@
 # realhand_l6_ros2
 
-`realhand_l6_ros2` provides ROS 2 Jazzy packages for controlling and integrating the RealHand L6 dexterous hand. The repository includes a C++ `ros2_control` hardware interface over Linux SocketCAN, tactile contact control, robot description and bringup, virtual-CAN emulation, and MoveIt 2 configuration. Physical validation on a right L6 covers CAN communication, hardware activation, joint-state feedback, tactile acquisition and contact detection, contact-gated control, and position and trajectory execution through `ros2_control` and `hand_trajectory_controller`. CI exercises the same software interfaces with mock hardware and an emulated hand on `vcan`.
+`realhand_l6_ros2` provides ROS 2 Jazzy packages for controlling and integrating the [RealHand L6](https://www.realhand.com/l6) dexterous hand. The repository includes a C++ `ros2_control` hardware interface over Linux SocketCAN, tactile contact control, robot description and bringup, virtual-CAN emulation, and MoveIt 2 configuration. Physical validation on a right L6 covers CAN communication, hardware activation, joint-state feedback, tactile acquisition and contact detection, contact-gated control, and position and trajectory execution through `ros2_control` and `hand_trajectory_controller`. CI exercises the same software interfaces with mock hardware and an emulated hand on `vcan`.
 
 [![ci](https://github.com/coenwerem/realhand_l6_ros2/actions/workflows/ci.yml/badge.svg)](https://github.com/coenwerem/realhand_l6_ros2/actions/workflows/ci.yml)
 ![ROS 2 Jazzy](https://img.shields.io/badge/ROS%202-Jazzy-blue)
@@ -14,12 +14,10 @@
   <img src="docs/contact_detection_side_by_side.gif" alt="RealHand L6 fingertip contact detection and corresponding per-finger contact markers in RViz during the same hardware test" width="720"/>
 </p>
 
-This recording shows a physical right RealHand L6 mounted on an xArm7. The left panel shows fingertip contact during direct interaction with the hand. The right panel shows the corresponding contact state in RViz using markers placed from the modeled tactile-pad geometry. Each marker is attached to its finger-specific contact frame. Green indicates no detected contact and yellow indicates contact. The hand base frame is attached to the robot wrist and is not shown separately.
+The video above shows a physical right RealHand L6 mounted on an xArm7. The left panel shows fingertip contact during direct interaction with the hand. The right panel shows the corresponding contact state in RViz using markers placed from the modeled tactile-pad geometry. Each marker is attached to its finger-specific contact frame. Green indicates no detected contact and yellow indicates contact. The hand base frame is attached to the robot wrist and is not shown separately.
 
 ### Contact-Gated Control
-
 #### Mock Demonstration
-
 <p align="center">
   <img src="docs/mock_contact_gated_close.gif" alt="Contact-gated close on mock hardware, with each finger stopping when its tactile pad reaches the emulated object surface" width="360"/>
 </p>
