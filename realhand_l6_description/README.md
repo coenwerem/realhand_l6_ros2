@@ -8,7 +8,7 @@ URDF, meshes, `ros2_control` block, and RViz configuration for the RealHand L6, 
 
 Next, `urdf/realhand_l6.ros2_control.xacro` defines `realhand_l6_ros2_control` with params `name`, `prefix`, `side`, `hardware` (`mock` or `real`), `can_interface`, `can_id`, `enable_tactile`, `taxel_topic`, and `setpoints`. `mock` loads `mock_components/GenericSystem` with `mock_sensor_commands`, so tests and demos drive the pad forces through fake command interfaces. `real` loads `realhand_hardware/RealHandSystem` with the matching parameters. `setpoints` (default true) adds `speed` and `torque` command interfaces to every actuated joint.
 
-Finally, `urdf/realhand_l6.urdf.xacro` is the standalone hand on a `world` link with args `prefix`, `side`, `hardware` (`none`, `mock`, `real`), `can_interface`, `can_id`, `enable_tactile`, `taxel_topic`, and `setpoints`.
+Finally, `urdf/realhand_l6.urdf.xacro` is the standalone hand on a `world` link with args `prefix`, `side`, `hardware` (`none`, `mock`, `real`), `can_interface`, `can_id`, `enable_tactile`, `taxel_topic`, and `setpoints`. The `use_object` arg (default false) adds a visual-only cube, `object_link`, on a fixed joint at the hand base, posed and sized through `object_size`, `object_xyz`, `object_rpy`, and `object_rgba`. The mock demo renders the cube as the object whose surface `mock_contact_surface` emulates, with the default size and pose taken from the posed grasp scene the demo's contact depths reproduce.
 
 ## View the hand
 

@@ -104,3 +104,20 @@ def test_setpoints_can_be_left_out():
 def test_no_hardware_block_by_default():
     root = ET.fromstring(render())
     assert root.find('ros2_control') is None
+
+
+def test_object_cube():
+    root = ET.fromstring(render())
+    assert 'object_link' not in {li.attrib['name'] for li in root.findall('link')}
+    urdf = render(prefix='rh_', use_object='true', object_size='0.05',
+                  object_xyz='0.1 0.0 0.2')
+    root = ET.fromstring(urdf)
+    links = {li.attrib['name']: li for li in root.findall('link')}
+    box = links['rh_object_link'].find('visual/geometry/box')
+    assert box.attrib['size'] == '0.05 0.05 0.05'
+    joint = {j.attrib['name']: j for j in root.findall('joint')}['rh_hand_base_to_object']
+    assert joint.attrib['type'] == 'fixed'
+    assert joint.find('parent').attrib['link'] == 'rh_hand_base_link'
+    assert joint.find('origin').attrib['xyz'] == '0.1 0.0 0.2'
+    subprocess.run(['check_urdf', '/dev/stdin'], input=urdf, check=True,
+                   capture_output=True, text=True)

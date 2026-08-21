@@ -27,7 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'contact_viz = realhand_l6_bringup.contact_viz:main',
-            'mock_force_ramp = realhand_l6_bringup.mock_force_ramp:main',
+            'mock_contact_surface = realhand_l6_bringup.mock_contact_surface:main',
             'mock_can_feeder = realhand_l6_bringup.mock_can_feeder:main',
             'can_tactile_probe = realhand_l6_bringup.can_tactile_probe:main',
         ],

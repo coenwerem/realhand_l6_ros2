@@ -20,7 +20,7 @@ The demo above is from a real hardware test on the right variant of the RealHand
   <img src="docs/mock_contact_gated_close.gif" alt="Contact gated close on the mock stack, each finger freezes when its pad reports contact" width="360"/>
 </p>
 
-The mock-stack example above demonstrates contact-gated closing. The tactile pads cross the contact threshold sequentially from thumb to pinky. Each finger latches at its first detected contact and its marker turns red, making the contact order visible.
+The mock-stack example above demonstrates contact-gated closing against an object cube fixed to the hand base, with the cube and grasp taken from a posed source scene. The `mock_contact_surface` node emulates the cube surface with a contact depth per finger, driving each pad force from the finger's own gating joint, with the depths set just under the posed grasp angles. All fingers sweep together, each finger latches with a red marker on arrival at the posed grasp around the cube, and the thumb latches through the opposition swing.
 
 #### b. Real Hardware
 We ran the physical right L6 through the same driver and controller stack for the hardware experiments behind the papers in the [Citation](#citation) section. The physical runs exercised SocketCAN communication, hardware activation, joint-state feedback, position control through `ros2_control` and `hand_trajectory_controller`, tactile acquisition, and fingertip contact detection. The contact state detection demo above comes from one of the physical tests. The repository does not yet include a dedicated recording of contact-gated closing on the physical hand.
@@ -72,7 +72,7 @@ Each package includes its own README with detailed interfaces, parameters, and l
 | `realhand_hardware` | Implements the `hardware_interface::SystemInterface` plugin `realhand_hardware/RealHandSystem`. Communicates with the RealHand CAN frame family over SocketCAN, exports position command and state interfaces for actuated joints, synthesizes state for coupled distal joints, exports one summed force state interface per tactile pad, and optionally exposes per-joint speed and torque command interfaces. Model-specific constants are selected through the `model` parameter. |
 | `realhand_contact_controller` | Implements the `controller_interface::ControllerInterface` plugin `realhand_contact_controller/ContactGatedController`. Commands each finger toward a target and latches the finger once its tactile pad crosses a force threshold. Distinguishes contact-gated grip from closure in free space, supports ungated opening and monitor-only operation, uses real-time-safe publishing, and defines parameters through `generate_parameter_library`. |
 | `realhand_l6_description` | Provides the L6 Xacro description for right and left hands, including meshes, `<finger>_pad` frames on each distal link, a tool center point, and a `ros2_control` macro selecting either `mock_components/GenericSystem` or the RealHand hardware plugin. |
-| `realhand_l6_bringup` | Provides launch files for mock, virtual CAN, and physical hardware configurations, controller configuration, RViz contact markers, a `vcan0` hand emulator, a mock tactile-force ramp, and a read-only CAN probe. |
+| `realhand_l6_bringup` | Provides launch files for mock, virtual CAN, and physical hardware configurations, controller configuration, RViz contact markers, a `vcan0` hand emulator, a mock contact-surface node, and a read-only CAN probe. |
 | `realhand_l6_moveit_config` | Provides an SRDF Xacro macro for arm-hand configurations, including finger chains, the `hand` group, `open`, `pinch`, and `power` states, and hand collision pairs. Also includes a standalone MoveIt demo for mock or physical hardware. |
 
 ## Quickstart With No Hardware
@@ -87,12 +87,12 @@ source install/setup.bash
 ros2 launch realhand_l6_bringup mock.launch.py
 ```
 
-RViz starts with the hand model and tactile pad markers. After a short delay, the mock stack issues a close request and drives the tactile pads above threshold one finger at a time, causing each finger to stop at a different joint angle. You can also publish requests directly while the stack is running.
+RViz starts with the hand model, tactile pad markers, and the object cube. After a short delay, the mock stack issues a close request. All fingers sweep toward the close target, and each finger stops where its pad reaches the cube face, so the final joint angles differ per finger. You can also publish requests directly while the stack is running.
 
 ```bash
 ros2 topic pub --once /contact_gated_controller/open std_msgs/msg/Bool "{data: true}"
 ros2 topic pub --once /contact_gated_controller/close_to sensor_msgs/msg/JointState \
-  "{name: [thumb_cmc_pitch, thumb_cmc_yaw, index_mcp_pitch, middle_mcp_pitch, ring_mcp_pitch, pinky_mcp_pitch], position: [0.5, 1.2, 1.4, 1.4, 1.4, 1.4]}"
+  "{name: [thumb_cmc_pitch, thumb_cmc_yaw, index_mcp_pitch, middle_mcp_pitch, ring_mcp_pitch, pinky_mcp_pitch], position: [0.0, 1.25, 0.75, 1.0, 1.0, 0.78]}"
 ros2 topic pub --once /tactile_mock_controller/commands std_msgs/msg/Float64MultiArray "{data: [0, 0, 9000, 0, 0]}"
 ros2 topic echo /contact_gated_controller/contact_state
 ```

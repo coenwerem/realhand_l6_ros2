@@ -1,0 +1,17 @@
+# Overrides layered over controllers.yaml for the mock demo only.
+#
+# The demo grasp from the source scene reaches the object cube with the
+# thumb opposition swing while the thumb pitch stays at zero, so the
+# mock gates the thumb on cmc_yaw and parks cmc_pitch as the ungated
+# opposition joint. The hardware configuration keeps the physical
+# mapping in controllers.yaml, where the pitch presses the pad into the
+# object and the yaw carries opposition.
+contact_gated_controller:
+  ros__parameters:
+    flexion_joints:
+      - thumb_cmc_yaw
+      - index_mcp_pitch
+      - middle_mcp_pitch
+      - ring_mcp_pitch
+      - pinky_mcp_pitch
+    thumb_opposition_joint: thumb_cmc_pitch

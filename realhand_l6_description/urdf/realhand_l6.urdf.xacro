@@ -11,6 +11,11 @@
     enable_tactile request taxel matrices from the hand
     taxel_topic    optional raw taxel JSON topic
     setpoints      speed and torque command interfaces on actuated joints
+    use_object     add a graspable object on a fixed joint at the hand base
+    object_size    object edge length in meters
+    object_xyz     object center in the hand base frame
+    object_rpy     object orientation in the hand base frame
+    object_rgba    object material color
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="realhand_l6">
 
@@ -22,6 +27,11 @@
   <xacro:arg name="enable_tactile" default="true"/>
   <xacro:arg name="taxel_topic" default=""/>
   <xacro:arg name="setpoints" default="true"/>
+  <xacro:arg name="use_object" default="false"/>
+  <xacro:arg name="object_size" default="0.055"/>
+  <xacro:arg name="object_xyz" default="0.065 0.005 0.08"/>
+  <xacro:arg name="object_rpy" default="0 0 0"/>
+  <xacro:arg name="object_rgba" default="0.43 0.6 0.78 1.0"/>
 
   <xacro:include filename="realhand_l6_macro.xacro"/>
   <xacro:include filename="realhand_l6.ros2_control.xacro"/>
@@ -31,6 +41,29 @@
   <xacro:realhand_l6 prefix="$(arg prefix)" side="$(arg side)" parent="world">
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:realhand_l6>
+
+  <!-- Cube on a fixed joint at the hand base, standing in for the grasped
+       object. The mock contact surface emulates its per finger contact
+       depths, so the demo shows the fingers latching on its faces. -->
+  <xacro:if value="$(arg use_object)">
+    <material name="object_material">
+      <color rgba="$(arg object_rgba)"/>
+    </material>
+    <link name="$(arg prefix)object_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="$(arg object_size) $(arg object_size) $(arg object_size)"/>
+        </geometry>
+        <material name="object_material"/>
+      </visual>
+    </link>
+    <joint name="$(arg prefix)hand_base_to_object" type="fixed">
+      <parent link="$(arg prefix)hand_base_link"/>
+      <child link="$(arg prefix)object_link"/>
+      <origin xyz="$(arg object_xyz)" rpy="$(arg object_rpy)"/>
+    </joint>
+  </xacro:if>
 
   <xacro:unless value="${'$(arg hardware)' == 'none'}">
     <xacro:realhand_l6_ros2_control

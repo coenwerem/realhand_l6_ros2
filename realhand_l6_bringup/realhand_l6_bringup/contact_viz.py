@@ -95,19 +95,26 @@ class ContactViz(Node):
             pad.color.r, pad.color.g, pad.color.b, pad.color.a = r, g, b, 0.95
             arr.markers.append(pad)
 
+            # RViz drops a text marker with an empty string as invalid and
+            # holds the previous text, so an idle finger gets an explicit
+            # DELETE for its label instead of an empty ADD.
             label = Marker()
             label.header.frame_id = frame
             label.header.stamp = stamp
             label.ns = 'labels'
             label.id = 100 + i
             label.type = Marker.TEXT_VIEW_FACING
-            label.action = Marker.ADD
-            label.frame_locked = True
-            label.pose.position.z = 0.015
-            label.pose.orientation.w = 1.0
-            label.scale.z = self.text_scale
-            label.color.r = label.color.g = label.color.b = label.color.a = 1.0
-            label.text = LABELS.get(self.state[i], '?')
+            text = LABELS.get(self.state[i], '?')
+            if text:
+                label.action = Marker.ADD
+                label.frame_locked = True
+                label.pose.position.z = 0.015
+                label.pose.orientation.w = 1.0
+                label.scale.z = self.text_scale
+                label.color.r = label.color.g = label.color.b = label.color.a = 1.0
+                label.text = text
+            else:
+                label.action = Marker.DELETE
             arr.markers.append(label)
         self.pub.publish(arr)
 
