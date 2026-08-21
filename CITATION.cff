@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If realhand_l6_ros2 supports your work, please cite the software using the metadata in this file, or cite the relevant paper listed in the README."
+title: "realhand_l6_ros2: ROS 2 control driver, tactile contact controller, and MoveIt configuration for the RealHand L6 dexterous hand"
+type: software
+authors:
+  - family-names: Enwerem
+    given-names: Clinton
+    email: enwerem@terpmail.umd.edu
+license: Apache-2.0
+version: 0.1.0
+repository-code: "https://github.com/coenwerem/realhand_l6_ros2"
+url: "https://github.com/coenwerem/realhand_l6_ros2"
+keywords:
+  - ROS 2
+  - ros2_control
+  - dexterous hand
+  - tactile sensing
+  - SocketCAN
+  - RealHand L6
+  - MoveIt
