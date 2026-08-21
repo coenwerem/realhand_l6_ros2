@@ -16,12 +16,12 @@
 
 Draws each tactile sensing window as a thin patch at the <finger>_pad frame
 the description publishes, colored by the contact code from the controller,
-and a floating label for fingers in contact or latched.
+and a floating label for fingers in contact or gripping.
 
   green   0  no contact
   yellow  2  contact sensed, finger still moving
-  red     1  latched on contact, gripped
-  purple  3  latched at target with no contact, missed
+  red     1  gripped, stopped on contact and holding
+  purple  3  stopped at target with no contact, missed
 """
 
 import rclpy
@@ -39,7 +39,7 @@ COLORS = {
     2: (0.95, 0.85, 0.10),
     3: (0.60, 0.10, 0.80),
 }
-LABELS = {0: '', 1: 'latched', 2: 'contact', 3: 'missed'}
+LABELS = {0: '', 1: 'contact', 2: 'contact', 3: 'missed'}
 
 
 class ContactViz(Node):

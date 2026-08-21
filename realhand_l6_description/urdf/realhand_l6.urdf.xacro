@@ -44,7 +44,7 @@
 
   <!-- Cube on a fixed joint at the hand base, standing in for the grasped
        object. The mock contact surface emulates its per finger contact
-       depths, so the demo shows the fingers latching on its faces. -->
+       depths, so the demo shows the fingers gripping its faces. -->
   <xacro:if value="$(arg use_object)">
     <material name="object_material">
       <color rgba="$(arg object_rgba)"/>

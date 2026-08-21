@@ -22,7 +22,7 @@ attached. Bring the bus up first with scripts/setup_vcan.sh.
 """
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -33,12 +33,16 @@ from realhand_l6_bringup import stack
 def generate_launch_description():
     can_interface = LaunchConfiguration('can_interface')
     description = stack.robot_description(hardware='real', can_interface=can_interface)
-    feeder = ExecuteProcess(
-        cmd=['ros2', 'run', 'realhand_l6_bringup', 'mock_can_feeder',
-             '--interface', can_interface,
-             '--contact-delay', LaunchConfiguration('contact_delay'),
-             '--ramp', LaunchConfiguration('ramp'),
-             '--record', LaunchConfiguration('record')],
+    # Launched directly as a package executable. A ros2 run wrapper here
+    # swallows the shutdown signal, launch signals the wrapper, the wrapper
+    # dies, and the emulator itself lives on holding the bus, so every test
+    # run leaves one more stale emulator answering on vcan0.
+    feeder = Node(
+        package='realhand_l6_bringup', executable='mock_can_feeder',
+        arguments=['--interface', can_interface,
+                   '--contact-delay', LaunchConfiguration('contact_delay'),
+                   '--ramp', LaunchConfiguration('ramp'),
+                   '--record', LaunchConfiguration('record')],
         output='screen')
     return LaunchDescription([
         DeclareLaunchArgument('can_interface', default_value='vcan0'),

@@ -18,10 +18,10 @@ mock_components/GenericSystem stands in for the hand and mirrors position
 commands back as state. A forward command controller owns the fake tactile
 command interfaces and mock_contact_surface converts finger positions into
 pad forces, emulating an object surface at a per finger depth. A close
-request sweeps all fingers together and each finger latches where it
-meets the virtual object, as on the physical hand. use_object renders
-the object as a cube fixed to the hand base, sized and posed so the
-default contact angles latch the finger pads on its near face.
+request sweeps all fingers together and each finger stops and grips
+where it meets the virtual object, as on the physical hand. use_object
+renders the object as a cube fixed to the hand base, sized and posed so
+the default contact angles put the finger pads on its faces.
 
   ros2 launch realhand_l6_bringup mock.launch.py
 """

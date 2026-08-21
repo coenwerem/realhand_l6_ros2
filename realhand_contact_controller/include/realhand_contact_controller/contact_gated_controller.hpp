@@ -47,8 +47,8 @@ namespace realhand_contact_controller
 //                    open_position without gating
 //   ~/contact_state  std_msgs/Int32MultiArray out, one code per finger
 //                    0 no contact, 2 contact sensed and still moving,
-//                    1 latched on contact (gripped), 3 latched at target
-//                    with no contact seen (missed)
+//                    1 gripped on contact, 3 stopped at target with no
+//                    contact seen (missed)
 //   ~/finger_force   std_msgs/Float64MultiArray out, summed pad force
 class ContactGatedController : public controller_interface::ControllerInterface
 {
@@ -70,7 +70,7 @@ public:
 
   // Contact codes published on ~/contact_state.
   static constexpr int CONTACT_NONE = 0;
-  static constexpr int CONTACT_LATCHED = 1;
+  static constexpr int CONTACT_GRIPPED = 1;
   static constexpr int CONTACT_SENSING = 2;
   static constexpr int CONTACT_MISSED = 3;
 
@@ -93,7 +93,7 @@ private:
   std::vector<double> cmd_pos_;
   std::vector<double> target_pos_;
   std::vector<double> finger_force_;
-  std::vector<bool> latched_;
+  std::vector<bool> frozen_;
   std::vector<bool> contacted_;
   std::vector<bool> contact_;
   State state_{State::IDLE};

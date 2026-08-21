@@ -18,13 +18,13 @@ Subscribes to joint states and publishes one force per pad to the forward
 command controller owning the mock tactile command interfaces. Each pad
 force rises once the finger's gating joint passes its contact angle, as
 if the fingertip pressed into an object at a fixed depth. All fingers
-sweep together and each finger latches where it meets the virtual
-surface, matching the closing behavior of the physical hand. The default
-contact angles sit just under the grasp configuration around the demo
-object cube, taken from joint_state_zeros.yaml of the MuJoCoDex
-standalone scene, so each finger latches as it arrives at the designed
-grasp. The thumb meets the cube through the opposition swing, so its
-gating joint is cmc_yaw, matching mock_controllers.yaml.
+sweep together and each finger stops and grips where it meets the
+virtual surface, matching the closing behavior of the physical hand.
+The default contact angles sit just under the grasp configuration
+around the demo object cube, taken from joint_state_zeros.yaml of the
+MuJoCoDex standalone scene, so each finger grips as it arrives at the
+designed grasp. The thumb meets the cube through the opposition swing,
+so its gating joint is cmc_yaw, matching mock_controllers.yaml.
 """
 
 import rclpy
@@ -46,8 +46,8 @@ class MockContactSurface(Node):
             'ring_mcp_pitch', 'pinky_mcp_pitch'])
         # Gating joint angle per finger at which the fingertip surface meets
         # the object cube. The finger angles sit 0.015 rad under the grasp
-        # configuration in joint_state_zeros.yaml so each finger latches on
-        # the designed grasp. The thumb latches earlier, where the thumb
+        # configuration in joint_state_zeros.yaml so each finger grips at
+        # the designed grasp. The thumb grips earlier, where the thumb
         # link surface first meets the thumb side face of the cube during
         # the opposition swing. The posed yaw of 1.096 lies past the face
         # and would sweep the thumb through the cube's lower corner on the

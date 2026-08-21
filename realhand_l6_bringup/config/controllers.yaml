@@ -73,7 +73,7 @@ contact_gated_controller:
     thumb_opposition_joint: thumb_cmc_yaw
     sensor_prefix: tactile_
     # Summed taxel force, 72 taxels at 0 to 255 each, so full pad contact
-    # sums near 18360. 300 latches early in a press.
+    # sums near 18360. 300 stops a finger early in a press.
     contact_threshold: 300.0
     close_step: 0.005
     open_position: 0.0

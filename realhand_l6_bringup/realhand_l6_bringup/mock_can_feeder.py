@@ -17,7 +17,7 @@
 Answers position requests with the last commanded position and streams
 taxel matrix rows for every finger, so realhand_hardware runs its real
 decode path with no hand attached. Pad pressure ramps up on the chosen
-fingers after a delay, so a commanded close latches finger by finger.
+fingers after a delay, so a commanded close grips finger by finger.
 
 Bring up the bus first with scripts/setup_vcan.sh, then
 

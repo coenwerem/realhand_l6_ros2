@@ -16,7 +16,7 @@
 
 Launches mock.launch.py without RViz or the ramp, presses the index pad
 through the forward command controller, requests a close, and checks that
-the index finger latches in place while the other fingers reach the target
+the index finger stops in place while the other fingers reach the target
 and report a miss. Then opens and checks every joint returns to zero.
 A second case swaps in the joint trajectory controller and drives the hand
 through a FollowJointTrajectory goal, the path a planner uses.
@@ -155,17 +155,17 @@ class TestMockPipeline(unittest.TestCase):
         cls.probe.destroy_node()
         rclpy.shutdown()
 
-    def test_close_latches_on_contact_then_opens(self):
+    def test_close_grips_on_contact_then_opens(self):
         p = self.probe
         p.wait_until(lambda: p.contact is not None and 'index_mcp_pitch' in p.joint_positions,
                      timeout=30.0, what='controllers to come up')
 
         # Index pad already pressed when the close request arrives, so the
-        # index finger latches at once and stays put.
+        # index finger stops at once and stays put.
         p.wait_until(lambda: p.contact[1] == 2, timeout=10.0, what='index contact sensed',
                      repeat=lambda: p.press([0.0, FULL_FORCE, 0.0, 0.0, 0.0]))
         index_before = p.joint_positions['index_mcp_pitch']
-        p.wait_until(lambda: p.contact[1] == 1, timeout=10.0, what='index latched',
+        p.wait_until(lambda: p.contact[1] == 1, timeout=10.0, what='index gripped',
                      repeat=lambda: p.close_to(1.0))
         p.wait_until(lambda: p.contact[3] == 3, timeout=5.0, what='ring finger miss')
         p.spin_for(0.5)

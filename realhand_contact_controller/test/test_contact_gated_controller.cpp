@@ -262,7 +262,7 @@ TEST_F(ContactGatedControllerTest, CloseStopsOnContactAndReportsGrip)
 
   const auto codes = latest_contact();
   ASSERT_EQ(codes.size(), FINGERS.size());
-  EXPECT_EQ(codes[1], ContactGatedController::CONTACT_LATCHED);
+  EXPECT_EQ(codes[1], ContactGatedController::CONTACT_GRIPPED);
   EXPECT_EQ(codes[2], ContactGatedController::CONTACT_NONE);
 }
 
@@ -309,7 +309,7 @@ TEST_F(ContactGatedControllerTest, OpenIsNotGatedByContact)
   for (std::size_t j = 0; j < JOINTS.size(); ++j) {
     EXPECT_NEAR(command(j), 0.0, 1e-9);
                                                                                       }
-  // After an ungated open the codes report plain contact, never latched or
+  // After an ungated open the codes report plain contact, never gripped or
   // missed.
   const auto codes = latest_contact();
   ASSERT_EQ(codes.size(), FINGERS.size());
@@ -328,7 +328,7 @@ TEST_F(ContactGatedControllerTest, ThumbOppositionFinishesBeforeHold)
   close_pub_->publish(msg);
   wait_for_request_delivery();
   update(10);
-  // Flexion joints latched at 0.02 after two steps, opposition continues.
+  // Flexion joints froze at 0.02 after two steps, opposition continues.
   EXPECT_NEAR(command(0), 0.02, 1e-9);
   EXPECT_NEAR(command(1), 10 * STEP, 1e-9);
   update(45);

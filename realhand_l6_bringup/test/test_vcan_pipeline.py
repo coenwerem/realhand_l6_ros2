@@ -17,7 +17,7 @@
 Needs vcan0 up (scripts/setup_vcan.sh). Without it the test is skipped, so
 the suite passes on machines and runners with no CAN support. With it, the
 emulated hand answers realhand_hardware over SocketCAN, contact ramps in on
-every finger, and a close request latches all five with the joint state
+every finger, and a close request grips all five with the joint state
 frozen short of the target.
 """
 
@@ -143,11 +143,11 @@ class TestVcanPipeline(unittest.TestCase):
         # Every pad ramps to full pressure after the emulator's delay.
         p.wait_until(lambda: all(c == 2 for c in p.contact), timeout=10.0,
                      what='all five pads sensed through the CAN decode path')
-        # A close with contact already present latches every finger where it
+        # A close with contact already present stops every finger where it
         # stands, and the emulator echoes commands, so positions stay near zero
         # while opposition (ungated) travels to its target.
         p.wait_until(lambda: all(c == 1 for c in p.contact), timeout=10.0,
-                     what='all fingers latched', repeat=lambda: p.close_to(1.0))
+                     what='all fingers gripped', repeat=lambda: p.close_to(1.0))
         p.wait_until(lambda: abs(p.joint_positions['thumb_cmc_yaw'] - 1.0) < 0.02,
                      timeout=10.0, what='thumb opposition to reach target')
         for j in ('index_mcp_pitch', 'middle_mcp_pitch', 'ring_mcp_pitch', 'pinky_mcp_pitch'):

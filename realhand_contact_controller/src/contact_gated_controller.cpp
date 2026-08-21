@@ -85,7 +85,7 @@ CallbackReturn ContactGatedController::on_configure(const rclcpp_lifecycle::Stat
   cmd_pos_.assign(n_cmd, params_.open_position);
   target_pos_.assign(n_cmd, params_.open_position);
   finger_force_.assign(n_fingers_, 0.0);
-  latched_.assign(n_fingers_, false);
+  frozen_.assign(n_fingers_, false);
   contacted_.assign(n_fingers_, false);
   contact_.assign(n_fingers_, false);
 
@@ -204,7 +204,7 @@ CallbackReturn ContactGatedController::on_activate(const rclcpp_lifecycle::State
       target_pos_[j] = cmd_pos_[j];
     }
   }
-  std::fill(latched_.begin(), latched_.end(), false);
+  std::fill(frozen_.begin(), frozen_.end(), false);
   std::fill(contacted_.begin(), contacted_.end(), false);
   state_ = State::IDLE;
   gated_close_ = true;
@@ -238,7 +238,7 @@ return_type ContactGatedController::update(const rclcpp::Time &, const rclcpp::D
   //    so an open motion stays ungated until the next close request.
   if (request_open_.exchange(false)) {
     std::fill(target_pos_.begin(), target_pos_.end(), params_.open_position);
-    std::fill(latched_.begin(), latched_.end(), false);
+    std::fill(frozen_.begin(), frozen_.end(), false);
     std::fill(contacted_.begin(), contacted_.end(), false);
     state_ = State::CLOSE;
     gated_close_ = false;
@@ -256,7 +256,7 @@ return_type ContactGatedController::update(const rclcpp::Time &, const rclcpp::D
         }
       }
     }
-    std::fill(latched_.begin(), latched_.end(), false);
+    std::fill(frozen_.begin(), frozen_.end(), false);
     std::fill(contacted_.begin(), contacted_.end(), false);
     state_ = State::CLOSE;
     gated_close_ = true;
@@ -265,8 +265,8 @@ return_type ContactGatedController::update(const rclcpp::Time &, const rclcpp::D
   // 3. Command update.
   if (state_ == State::CLOSE) {
     // Thumb opposition drives to target ungated. Its progress gates the HOLD
-    // transition together with the flexion latches, otherwise the short travel
-    // flexion joints latch first and freeze opposition partway.
+    // transition together with the frozen flexion joints, otherwise the short
+    // travel flexion joints stop first and freeze opposition partway.
     bool opp_done = true;
     if (thumb_opp_slot_ >= 0) {
       const auto s = static_cast<std::size_t>(thumb_opp_slot_);
@@ -280,14 +280,14 @@ return_type ContactGatedController::update(const rclcpp::Time &, const rclcpp::D
     bool all_done = opp_done;
     for (std::size_t f = 0; f < n_fingers_; ++f) {
       const auto slot = static_cast<std::size_t>(flexion_slot_[f]);
-      if (latched_[f]) {continue;}
+      if (frozen_[f]) {continue;}
       if (gated_close_ && contact_[f]) {contacted_[f] = true;}
       const bool reached = std::abs(cmd_pos_[slot] - target_pos_[slot]) < 1e-4;
       if (reached || (gated_close_ && contact_[f])) {
         // Frozen either way. Reaching the target with no contact ever seen
         // means the finger closed on air, which contacted_ records so the
         // diagnostic reports a miss, not a grip.
-        latched_[f] = true;
+        frozen_[f] = true;
       } else {
         cmd_pos_[slot] = step_toward(cmd_pos_[slot], target_pos_[slot], params_.close_step);
         all_done = false;
@@ -317,10 +317,10 @@ void ContactGatedController::publish_diagnostics(const std::vector<bool> & conta
     auto & data = rt_contact_pub_->msg_.data;
     for (std::size_t f = 0; f < n_fingers_; ++f) {
       int code;
-      // Latched and missed only mean something for a gated close. An open
+      // Gripped and missed only mean something for a gated close. An open
       // motion that reaches its target reports plain contact state.
-      if (!params_.monitor_only && gated_close_ && latched_[f]) {
-        code = contacted_[f] ? CONTACT_LATCHED : CONTACT_MISSED;
+      if (!params_.monitor_only && gated_close_ && frozen_[f]) {
+        code = contacted_[f] ? CONTACT_GRIPPED : CONTACT_MISSED;
       } else {
         code = contact[f] ? CONTACT_SENSING : CONTACT_NONE;
       }

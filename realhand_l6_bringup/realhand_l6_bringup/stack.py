@@ -30,7 +30,7 @@ CLOSE_TARGET = [0.5, 1.2, 1.4, 1.4, 1.4, 1.4]
 # scene, plus a small overshoot per gated joint so every finger is still
 # moving when its contact angle fires. The contact angles in
 # mock_contact_surface sit just under the grasp values, so each finger
-# latches as it arrives at the designed configuration. The thumb reaches
+# grips as it arrives at the designed configuration. The thumb reaches
 # the cube through the opposition swing, so the mock gates the thumb on
 # cmc_yaw, see mock_controllers.yaml, and parks cmc_pitch at zero.
 MOCK_CLOSE_TARGET = [0.0, 1.25, 0.75, 1.0, 1.0, 0.78]

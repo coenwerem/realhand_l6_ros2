@@ -43,4 +43,4 @@ In practice, only one position controller can be active at a time, since all thr
 
 ## Tests
 
-`test_mock_pipeline.py` runs the whole mock stack, presses a pad, closes, checks the latch and miss codes and the joint positions, opens, then swaps in the trajectory controller and drives the hand through a `FollowJointTrajectory` goal. `test_vcan_pipeline.py` runs the real driver against the emulator, checks the decode path, the latch, and that speed setpoints reach the bus, and skips when `vcan0` is absent.
+`test_mock_pipeline.py` runs the whole mock stack, presses a pad, closes, checks the grip and miss codes and the joint positions, opens, then swaps in the trajectory controller and drives the hand through a `FollowJointTrajectory` goal. `test_vcan_pipeline.py` runs the real driver against the emulator, checks the decode path, the grip on contact, and that speed setpoints reach the bus, and skips when `vcan0` is absent.

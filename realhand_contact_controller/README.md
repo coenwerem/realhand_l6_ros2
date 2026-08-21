@@ -4,7 +4,7 @@
 
 ## Behavior
 
-A close request loads one target per command joint and starts the fingers moving by `close_step` radians per update. Each finger advances until its pad force reaches `contact_threshold`, at which point the finger latches at its current command, or until the finger reaches its target with no contact seen, which the controller reports as a miss so a caller can tell a grip from a close on air. The thumb opposition joint drives to its target without gating, and the hand enters HOLD only when opposition and every finger are done, so a short travel finger cannot freeze opposition partway. An open request moves every joint to `open_position` with no gating. Publishing goes through `realtime_tools::RealtimePublisher` with messages sized once at configure time, so `update()` allocates nothing.
+A close request loads one target per command joint and starts the fingers moving by `close_step` radians per update. Each finger advances until its pad force reaches `contact_threshold`, at which point the finger stops and holds its current command, or until the finger reaches its target with no contact seen, which the controller reports as a miss so a caller can tell a grip from a close on air. The thumb opposition joint drives to its target without gating, and the hand enters HOLD only when opposition and every finger are done, so a short travel finger cannot freeze opposition partway. An open request moves every joint to `open_position` with no gating. Publishing goes through `realtime_tools::RealtimePublisher` with messages sized once at configure time, so `update()` allocates nothing.
 
 ## Topics
 
@@ -21,8 +21,8 @@ Topics live under the controller name.
 |---|---|
 | 0 | no contact |
 | 2 | contact sensed, finger still moving or no close in progress |
-| 1 | latched on contact during a gated close, gripped |
-| 3 | latched at the commanded target with no contact seen, closed on air |
+| 1 | gripped, stopped on contact during a gated close and holding |
+| 3 | stopped at the commanded target with no contact seen, closed on air |
 
 ## Parameters
 
@@ -46,4 +46,4 @@ Claims `<joint>/position` for every entry of `command_joints` (none in monitor o
 
 ## Tests
 
-`test_contact_gated_controller.cpp` drives the controller with loaned interfaces the test owns, no controller_manager, and covers latch on contact, close on air, contact before close, ungated open, thumb opposition ordering, and monitor only mode.
+`test_contact_gated_controller.cpp` drives the controller with loaned interfaces the test owns, no controller_manager, and covers grip on contact, close on air, contact before close, ungated open, thumb opposition ordering, and monitor only mode.
