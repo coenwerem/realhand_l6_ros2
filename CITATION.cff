@@ -8,6 +8,7 @@ authors:
     email: enwerem@terpmail.umd.edu
 license: Apache-2.0
 version: 0.1.0
+doi: "10.5281/zenodo.22047278"
 repository-code: "https://github.com/coenwerem/realhand_l6_ros2"
 url: "https://github.com/coenwerem/realhand_l6_ros2"
 keywords:

@@ -5,7 +5,7 @@
 [![ci](https://github.com/coenwerem/realhand_l6_ros2/actions/workflows/ci.yml/badge.svg)](https://github.com/coenwerem/realhand_l6_ros2/actions/workflows/ci.yml)
 ![ROS 2 Jazzy](https://img.shields.io/badge/ROS%202-Jazzy-blue)
 ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-
+![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22047278.svg)
 ## Demos
 ### Physical Tactile Contact Detection
 <p align="center">
